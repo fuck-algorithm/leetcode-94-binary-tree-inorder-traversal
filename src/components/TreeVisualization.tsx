@@ -31,7 +31,7 @@ export default function TreeVisualization({ data, width, height, highlightedNode
     const treeData = treeLayout(root);
     
     // 绘制连接线
-    const links = svg.append('g')
+    svg.append('g')
       .attr('transform', `translate(50, 50)`)
       .selectAll('.link')
       .data(treeData.links())
