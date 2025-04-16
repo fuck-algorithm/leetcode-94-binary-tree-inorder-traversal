@@ -86,7 +86,7 @@ export default function BinaryTreeInorderTraversal() {
       if (autoPlayTimerRef.current) {
         clearInterval(autoPlayTimerRef.current);
       }
-      setCurrentStep(0);
+      // 不再重置为0，保持当前步骤位置
       autoPlayTimerRef.current = setInterval(() => {
         setCurrentStep(prev => {
           if (prev >= traversalSteps.length - 1) {
