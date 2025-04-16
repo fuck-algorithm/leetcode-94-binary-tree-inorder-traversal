@@ -71,37 +71,40 @@ export default function TreeVisualization({ data, width, height, highlightedNode
     const totalNodes = countNodes(data);
     const depth = determineTreeDepth(data);
     
-    // 动态计算节点大小和间距
+    // 修改动态计算节点大小和间距的方法，以更好地利用可用空间
     const dynamicNodeSize = () => {
-      // 基于节点数量和容器尺寸计算合适的节点大小
-      // 当节点很多时，节点应该更小
+      // 计算基于节点数量和容器尺寸的节点大小
+      // 对于节点较少的树，允许节点更大
       const baseSize = Math.min(
-        dimensions.width / (Math.pow(totalNodes, 0.6)), 
-        dimensions.height / (depth * 2.5)
+        dimensions.width / (Math.pow(totalNodes, 0.5)), 
+        dimensions.height / (depth * 2)
       );
       
-      // 节点数量阈值，用于调整大小范围
-      const sizeAdjustment = totalNodes > 20 ? 0.8 : 1;
+      // 根据节点数量调整大小
+      const sizeAdjustment = Math.min(1, 1.5 / Math.sqrt(totalNodes));
       
-      return Math.min(Math.max(baseSize * sizeAdjustment, 15), 30); // 限制最小和最大尺寸
+      // 确保节点大小合理
+      return Math.min(Math.max(baseSize * sizeAdjustment, 18), 35);
     };
     
     const nodeSize = dynamicNodeSize();
     
-    // 计算树的宽度，根据节点数量和容器尺寸
+    // 计算树的布局尺寸，充分利用容器空间
     const treeWidth = dimensions.width - nodeSize * 2;
     const treeHeight = dimensions.height - nodeSize * 2;
     
-    // 创建树形布局
+    // 创建树形布局，使用调整后的尺寸和间距
     const treeLayout = d3.tree<TreeNodeData>()
       .size([treeWidth, treeHeight])
-      .nodeSize([nodeSize * (totalNodes > 15 ? 8 : 10), nodeSize * (totalNodes > 15 ? 5 : 6)]); // 增加节点间的水平间距，增强分离度
+      .nodeSize([
+        nodeSize * (totalNodes > 15 ? 6 : 8), // 水平间距
+        nodeSize * (totalNodes > 15 ? 4 : 5)  // 垂直间距
+      ]);
     
-    // 转换数据为d3层次结构
+    // 转换数据为d3层次结构并应用布局
     const root = d3.hierarchy(data);
     
     // 确保左右子树的区分，即使只有一个子节点
-    // 标记每个节点是左子树还是右子树
     root.descendants().forEach(node => {
       if (node.parent) {
         // 如果是第一个子节点，标记为左子树
@@ -118,7 +121,11 @@ export default function TreeVisualization({ data, width, height, highlightedNode
     // 应用树形布局
     const treeData = treeLayout(root);
     
-    // 递归移动子树的所有节点
+    // 确保在x方向上更好地分散节点
+    const nodes = treeData.descendants();
+    const links = treeData.links();
+    
+    // 更强大的子树移动函数，可以平移整个子树
     function shiftSubtree(node: d3.HierarchyPointNode<TreeNodeData>, shiftAmount: number) {
       if (!node) return;
       
@@ -133,329 +140,70 @@ export default function TreeVisualization({ data, width, height, highlightedNode
       }
     }
     
-    // 调整子树的位置，防止重叠
-    function adjustTreeLayout(node: d3.HierarchyPointNode<TreeNodeData>, level: number = 0, leftOffset: number = 0) {
-      if (!node) return { width: 0, x: 0 };
+    // 优化重叠问题的处理
+    function optimizeTreeLayout(rootNode: d3.HierarchyPointNode<TreeNodeData>) {
+      // 自底向上处理每一层节点
+      const nodesByDepth: d3.HierarchyPointNode<TreeNodeData>[][] = [];
       
-      // 当前节点的位置信息
-      let nodeInfo = { 
-        width: nodeSize * 4, // 增加节点的最小宽度，避免窄树节点过近
-        x: node.x 
-      };
+      // 按层收集节点
+      rootNode.descendants().forEach(node => {
+        const depth = node.depth;
+        if (!nodesByDepth[depth]) {
+          nodesByDepth[depth] = [];
+        }
+        nodesByDepth[depth].push(node);
+      });
       
-      // 存储子树信息
-      const childrenInfo: { width: number, x: number }[] = [];
+      // 从叶子节点开始处理
+      for (let depth = nodesByDepth.length - 1; depth > 0; depth--) {
+        const nodesAtDepth = nodesByDepth[depth];
+        
+        // 对每层的节点，按x坐标排序
+        nodesAtDepth.sort((a, b) => a.x - b.x);
+        
+        // 处理可能的重叠
+        for (let i = 1; i < nodesAtDepth.length; i++) {
+          const currentNode = nodesAtDepth[i];
+          const prevNode = nodesAtDepth[i - 1];
+          
+          // 计算最小所需间距 (根据树的大小动态调整)
+          const minSpacing = nodeSize * (totalNodes > 15 ? 3 : 4);
+          
+          // 检查是否需要调整
+          if (currentNode.x - prevNode.x < minSpacing) {
+            // 需要右移当前节点及其子树
+            const shift = minSpacing - (currentNode.x - prevNode.x);
+            shiftSubtree(currentNode, shift);
+          }
+        }
+      }
       
-      // 如果有子节点，递归调整子节点位置
-      if (node.children && node.children.length > 0) {
-        let totalChildrenWidth = 0;
-        let minChildX = Infinity;
-        let maxChildX = -Infinity;
-        
-        // 为每个子树计算宽度
-        node.children.forEach((child, index) => {
-          // 递归调整子树
-          const childInfo = adjustTreeLayout(child, level + 1, leftOffset + totalChildrenWidth);
-          childrenInfo.push(childInfo);
-          
-          // 更新子树总宽度
-          totalChildrenWidth += childInfo.width;
-          
-          // 更新子树的最小和最大x坐标
-          minChildX = Math.min(minChildX, childInfo.x);
-          maxChildX = Math.max(maxChildX, childInfo.x);
-        });
-        
-        // 子树总宽度应该大于或等于当前节点宽度
-        nodeInfo.width = Math.max(nodeInfo.width, totalChildrenWidth);
-        
-        // 计算子树间的额外间距
-        const siblingSpacing = nodeSize * 8; // 增加子树间距，确保明显分离
-        
-        // 调整所有子节点的位置，避免重叠
-        if (node.children.length > 1) {
-          // 确保左右子树有足够的间距
-          const leftChildIndex = node.children.findIndex(child => (child as any).isLeftChild);
-          const rightChildIndex = node.children.findIndex(child => (child as any).isRightChild);
-          
-          if (leftChildIndex !== -1 && rightChildIndex !== -1) {
-            const leftChild = node.children[leftChildIndex];
-            const rightChild = node.children[rightChildIndex];
+      // 确保左右子树的平衡
+      nodesByDepth.forEach(nodesAtDepth => {
+        nodesAtDepth.forEach(node => {
+          if (node.children && node.children.length === 2) {
+            const leftChild = node.children[0];
+            const rightChild = node.children[1];
             
-            // 计算中心位置
-            const centerX = node.x;
-            
-            // 确保左子树位于父节点左侧，并且有足够距离
-            if (leftChild.x >= centerX - siblingSpacing) {
-              const shift = (centerX - siblingSpacing) - leftChild.x;
+            // 确保左子节点在父节点左侧，右子节点在父节点右侧
+            if (leftChild.x >= node.x) {
+              const shift = (node.x - nodeSize) - leftChild.x;
               shiftSubtree(leftChild, shift);
             }
             
-            // 确保右子树位于父节点右侧，并且有足够距离
-            if (rightChild.x <= centerX + siblingSpacing) {
-              const shift = (centerX + siblingSpacing) - rightChild.x;
+            if (rightChild.x <= node.x) {
+              const shift = (node.x + nodeSize) - rightChild.x;
               shiftSubtree(rightChild, shift);
             }
-            
-            // 检查左右子树本身是否有重叠
-            if (getMaxX(leftChild) >= getMinX(rightChild) - nodeSize * 4) {
-              // 左子树最右边和右子树最左边之间有重叠，需要进一步分离
-              const overlapAmount = getMaxX(leftChild) - getMinX(rightChild) + nodeSize * 4;
-              shiftSubtree(leftChild, -overlapAmount / 2);
-              shiftSubtree(rightChild, overlapAmount / 2);
-            }
           }
-        }
-        // 如果只有一个子节点，确保它在正确的位置
-        else if (node.children.length === 1) {
-          const child = node.children[0];
-          const isLeft = (child as any).isLeftChild;
-          
-          // 计算期望的位置
-          const expectedX = isLeft ? 
-            node.x - siblingSpacing : 
-            node.x + siblingSpacing;
-          
-          // 调整位置
-          const shift = expectedX - child.x;
-          shiftSubtree(child, shift);
-        }
-      }
-      
-      return nodeInfo;
-    }
-    
-    // 获取子树最左侧节点的x坐标
-    function getMinX(node: d3.HierarchyPointNode<TreeNodeData>): number {
-      if (!node) return Infinity;
-      
-      let minX = node.x;
-      
-      if (node.children && node.children.length > 0) {
-        node.children.forEach(child => {
-          minX = Math.min(minX, getMinX(child));
         });
-      }
-      
-      return minX;
-    }
-    
-    // 获取子树最右侧节点的x坐标
-    function getMaxX(node: d3.HierarchyPointNode<TreeNodeData>): number {
-      if (!node) return -Infinity;
-      
-      let maxX = node.x;
-      
-      if (node.children && node.children.length > 0) {
-        node.children.forEach(child => {
-          maxX = Math.max(maxX, getMaxX(child));
-        });
-      }
-      
-      return maxX;
-    }
-    
-    // 调整树的布局
-    adjustTreeLayout(treeData);
-    
-    // 二次检查和微调，避免子树间的重叠
-    function avoidOverlaps(nodes: d3.HierarchyPointNode<TreeNodeData>[]) {
-      // 按层级分组节点
-      const nodesByLevel: {[level: number]: d3.HierarchyPointNode<TreeNodeData>[]} = {};
-      
-      nodes.forEach(node => {
-        const level = node.depth;
-        if (!nodesByLevel[level]) {
-          nodesByLevel[level] = [];
-        }
-        nodesByLevel[level].push(node);
       });
-      
-      // 对每一层的节点进行处理
-      Object.keys(nodesByLevel).forEach(levelStr => {
-        const level = parseInt(levelStr);
-        const levelNodes = nodesByLevel[level];
-        
-        // 按X坐标排序
-        levelNodes.sort((a, b) => a.x - b.x);
-        
-        // 检查相邻节点间的距离
-        for (let i = 1; i < levelNodes.length; i++) {
-          const prevNode = levelNodes[i-1];
-          const currNode = levelNodes[i];
-          
-          // 最小允许的水平间距 - 增加最小距离防止重叠
-          const minDistance = nodeSize * 10; // 进一步增加同层节点间距
-          
-          // 如果间距不足，调整位置
-          if (currNode.x - prevNode.x < minDistance) {
-            const shift = minDistance - (currNode.x - prevNode.x);
-            
-            // 检查这两个节点是否有不同的父节点
-            if (prevNode.parent !== currNode.parent) {
-              // 不同父节点的子树可能有交叉，需要更大的分离
-              const extraShift = nodeSize * 2;
-              
-              // 向右移动当前节点及其后的所有节点
-              for (let j = i; j < levelNodes.length; j++) {
-                shiftSubtree(levelNodes[j], shift + extraShift);
-              }
-            } else {
-              // 同一父节点下的子树，标准分离
-              for (let j = i; j < levelNodes.length; j++) {
-                shiftSubtree(levelNodes[j], shift);
-              }
-            }
-          }
-        }
-      });
-      
-      // 对连线进行额外检查，防止交叉
-      verifyConnections(nodes);
     }
     
-    // 验证连线，确保没有交叉
-    function verifyConnections(nodes: d3.HierarchyPointNode<TreeNodeData>[]) {
-      const links: {
-        source: d3.HierarchyPointNode<TreeNodeData>;
-        target: d3.HierarchyPointNode<TreeNodeData>;
-        sourceX: number;
-        sourceY: number;
-        targetX: number;
-        targetY: number;
-      }[] = [];
-      
-      // 收集所有的连线信息
-      nodes.forEach(node => {
-        if (node.parent) {
-          links.push({
-            source: node.parent,
-            target: node,
-            sourceX: node.parent.x,
-            sourceY: node.parent.y,
-            targetX: node.x,
-            targetY: node.y
-          });
-        }
-      });
-      
-      // 检查每对连线是否有交叉
-      for (let i = 0; i < links.length; i++) {
-        for (let j = i + 1; j < links.length; j++) {
-          const link1 = links[i];
-          const link2 = links[j];
-          
-          // 跳过有共同端点的线段
-          if (link1.source === link2.source || 
-              link1.source === link2.target || 
-              link1.target === link2.source || 
-              link1.target === link2.target) {
-            continue;
-          }
-          
-          // 检测两条线段是否相交
-          if (doLinesIntersect(
-            link1.sourceX, link1.sourceY, link1.targetX, link1.targetY,
-            link2.sourceX, link2.sourceY, link2.targetX, link2.targetY
-          )) {
-            // 找到交叉线段，移动其中一个节点
-            const shift = nodeSize * 5;
-            
-            // 决定移动哪个节点
-            if (link1.target.depth > link2.target.depth) {
-              // 移动深度更大的节点
-              if (link1.target.x < link2.target.x) {
-                shiftSubtree(link1.target, -shift);
-              } else {
-                shiftSubtree(link1.target, shift);
-              }
-            } else {
-              if (link2.target.x < link1.target.x) {
-                shiftSubtree(link2.target, -shift);
-              } else {
-                shiftSubtree(link2.target, shift);
-              }
-            }
-          }
-        }
-      }
-    }
+    // 应用优化
+    optimizeTreeLayout(treeData);
     
-    // 检测两条线段是否相交
-    function doLinesIntersect(
-      x1: number, y1: number, x2: number, y2: number, 
-      x3: number, y3: number, x4: number, y4: number
-    ): boolean {
-      // 向量叉积
-      function ccw(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number): boolean {
-        return (y3 - y1) * (x2 - x1) > (y2 - y1) * (x3 - x1);
-      }
-      
-      // 判断两条线段是否相交
-      return ccw(x1, y1, x3, y3, x4, y4) !== ccw(x2, y2, x3, y3, x4, y4) && 
-             ccw(x1, y1, x2, y2, x3, y3) !== ccw(x1, y1, x2, y2, x4, y4);
-    }
-    
-    // 避免节点重叠
-    avoidOverlaps(treeData.descendants());
-    
-    // 最终检查和调整，确保左右子树位置明确
-    treeData.descendants().forEach(node => {
-      if (node.parent) {
-        const siblingSpacing = nodeSize * 9; // 进一步增加左右子树之间的间距
-        
-        // 如果是左子树，确保位于父节点左侧
-        if ((node as any).isLeftChild) {
-          // 确保x坐标小于父节点
-          if (node.x >= node.parent.x - siblingSpacing/2) {
-            const shift = node.parent.x - siblingSpacing - node.x;
-            shiftSubtree(node, shift);
-          }
-        }
-        
-        // 如果是右子树，确保位于父节点右侧
-        if ((node as any).isRightChild) {
-          // 确保x坐标大于父节点
-          if (node.x <= node.parent.x + siblingSpacing/2) {
-            const shift = node.parent.x + siblingSpacing - node.x;
-            shiftSubtree(node, shift);
-          }
-        }
-      }
-    });
-    
-    // 计算适当的缩放和平移
-    const nodes = treeData.descendants();
-    const links = treeData.links();
-    
-    // 添加指示线，显示是左子树还是右子树
-    const leftMarker = svg.append('defs')
-      .append('marker')
-      .attr('id', 'left-indicator')
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 10)
-      .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
-      .attr('orient', 'auto')
-      .append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', '#27ae60'); // 左子树标记颜色
-    
-    const rightMarker = svg.append('defs')
-      .append('marker')
-      .attr('id', 'right-indicator')
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 10)
-      .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
-      .attr('orient', 'auto')
-      .append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', '#e74c3c'); // 右子树标记颜色
-    
-    // 找出节点的边界
+    // 找出节点的边界，以便缩放整个树以适应容器
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     nodes.forEach(node => {
       minX = Math.min(minX, node.x);
@@ -464,19 +212,22 @@ export default function TreeVisualization({ data, width, height, highlightedNode
       maxY = Math.max(maxY, node.y);
     });
     
-    // 计算缩放因子和偏移量，确保树适合容器
+    // 计算缩放因子，确保树充分利用容器空间
     const width = maxX - minX || 1;
     const height = maxY - minY || 1;
     const padding = nodeSize;
     
+    // 计算合适的缩放比例，以充分利用可用空间
     const scale = Math.min(
       (dimensions.width - padding * 2) / width,
       (dimensions.height - padding * 2) / height
     );
     
-    // 为大型树调整缩放比例
-    const finalScale = totalNodes > 15 ? scale * 0.8 : scale;
+    // 优化缩放因子，确保树不会超出边界但又能最大限度利用空间
+    // 为大型树增加额外空间，避免拥挤
+    const finalScale = totalNodes > 15 ? scale * 0.9 : scale * 0.95;
     
+    // 计算居中位置的偏移量
     const translateX = (dimensions.width - width * finalScale) / 2 - minX * finalScale;
     const translateY = padding - minY * finalScale;
     
