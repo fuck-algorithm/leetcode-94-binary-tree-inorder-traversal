@@ -106,26 +106,14 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
   // 重新实现中序遍历，确保正确处理左子树
   current = root;
   
+  // 使用更明确的标志跟踪当前所在的阶段
+  let processingPhase: 'left' | 'node' | 'right' = 'left'; 
+  
   while (true) {
     // 阶段1: 向左遍历到底，将所有节点入栈
-    while (current) {
-      stack.push(current);
-      
-      steps.push({
-        stack: stack.map(node => node.id),
-        stackVals: stack.map(node => node.val),
-        currentId: current.id,
-        currentVal: current.val,
-        result: [...result],
-        visitedIds: [...visitedIds],
-        action: 'push',
-        description: `将节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 入栈，准备遍历左子树`
-      });
-      
-      // 如果有左子树，继续向左
-      if (current.left) {
-        const parentNode = current;
-        current = current.left;
+    if (processingPhase === 'left') {
+      if (current) {
+        stack.push(current);
         
         steps.push({
           stack: stack.map(node => node.id),
@@ -134,91 +122,146 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
           currentVal: current.val,
           result: [...result],
           visitedIds: [...visitedIds],
-          action: 'visit',
-          description: `访问节点 ${parentNode.val} (ID: ${parentNode.id.substring(0, 6)}...) 的左子节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)`
+          action: 'push',
+          description: `将节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 入栈，准备遍历左子树`
         });
+        
+        // 检查是否有左子树
+        if (current.left) {
+          const parentNode = current;
+          current = current.left;
+          
+          steps.push({
+            stack: stack.map(node => node.id),
+            stackVals: stack.map(node => node.val),
+            currentId: current.id,
+            currentVal: current.val,
+            result: [...result],
+            visitedIds: [...visitedIds],
+            action: 'visit',
+            description: `访问节点 ${parentNode.val} (ID: ${parentNode.id.substring(0, 6)}...) 的左子节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)`
+          });
+        } else {
+          // 这个节点没有左子树，明确记录这个事实
+          steps.push({
+            stack: stack.map(node => node.id),
+            stackVals: stack.map(node => node.val),
+            currentId: current.id,
+            currentVal: current.val,
+            result: [...result],
+            visitedIds: [...visitedIds],
+            action: 'visit',
+            description: `节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 的左子树为空，准备访问当前节点`
+          });
+          
+          // 切换到处理节点阶段
+          processingPhase = 'node';
+          // 保持current不变，因为我们需要处理这个节点
+        }
       } else {
-        // 这个节点没有左子树，记录这个事实
-        steps.push({
-          stack: stack.map(node => node.id),
-          stackVals: stack.map(node => node.val),
-          currentId: current.id,
-          currentVal: current.val,
-          result: [...result],
-          visitedIds: [...visitedIds],
-          action: 'visit',
-          description: `节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 的左子树为空，准备访问当前节点`
-        });
-        
-        // 标记当前节点为null，使我们跳出内层循环
-        current = null;
+        // 如果当前节点为null，但栈不为空，切换到节点处理阶段
+        if (stack.length > 0) {
+          processingPhase = 'node';
+        } else {
+          // 栈为空，遍历完成
+          break;
+        }
       }
     }
-    
-    // 如果栈为空，遍历完成
-    if (stack.length === 0) {
-      break;
+    // 阶段2: 处理当前节点
+    else if (processingPhase === 'node') {
+      // 从栈顶取出节点
+      if (stack.length > 0) {
+        current = stack.pop()!;
+        
+        steps.push({
+          stack: stack.map(node => node.id),
+          stackVals: stack.map(node => node.val),
+          currentId: current.id,
+          currentVal: current.val,
+          result: [...result],
+          visitedIds: [...visitedIds],
+          action: 'pop',
+          description: `从栈中弹出节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)，准备访问`
+        });
+        
+        // 访问节点
+        result.push(current.val);
+        visitedIds.push(current.id);
+        
+        steps.push({
+          stack: stack.map(node => node.id),
+          stackVals: stack.map(node => node.val),
+          currentId: current.id,
+          currentVal: current.val,
+          result: [...result],
+          visitedIds: [...visitedIds],
+          action: 'visit',
+          description: `访问节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)，将其加入结果`
+        });
+        
+        // 切换到右子树处理阶段
+        processingPhase = 'right';
+      } else {
+        // 栈为空，遍历完成
+        break;
+      }
     }
-    
-    // 阶段2: 弹出栈顶节点访问
-    current = stack.pop()!;
-    
-    steps.push({
-      stack: stack.map(node => node.id),
-      stackVals: stack.map(node => node.val),
-      currentId: current.id,
-      currentVal: current.val,
-      result: [...result],
-      visitedIds: [...visitedIds],
-      action: 'pop',
-      description: `从栈中弹出节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)，准备访问`
-    });
-    
-    // 访问节点
-    result.push(current.val);
-    visitedIds.push(current.id);
-    
-    steps.push({
-      stack: stack.map(node => node.id),
-      stackVals: stack.map(node => node.val),
-      currentId: current.id,
-      currentVal: current.val,
-      result: [...result],
-      visitedIds: [...visitedIds],
-      action: 'visit',
-      description: `访问节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)，将其加入结果`
-    });
-    
     // 阶段3: 处理右子树
-    if (current.right) {
-      const parentNode = current;
-      current = current.right;
-      
-      steps.push({
-        stack: stack.map(node => node.id),
-        stackVals: stack.map(node => node.val),
-        currentId: current.id,
-        currentVal: current.val,
-        result: [...result],
-        visitedIds: [...visitedIds],
-        action: 'move_right',
-        description: `访问节点 ${parentNode.val} (ID: ${parentNode.id.substring(0, 6)}...) 的右子节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)`
-      });
+    else if (processingPhase === 'right' && current) {
+      // 检查是否有右子树
+      if (current.right) {
+        const parentNode = current;
+        current = current.right;
+        
+        steps.push({
+          stack: stack.map(node => node.id),
+          stackVals: stack.map(node => node.val),
+          currentId: current.id,
+          currentVal: current.val,
+          result: [...result],
+          visitedIds: [...visitedIds],
+          action: 'move_right',
+          description: `访问节点 ${parentNode.val} (ID: ${parentNode.id.substring(0, 6)}...) 的右子节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)`
+        });
+        
+        // 切换回左子树处理阶段，因为需要先处理右子树的左边
+        processingPhase = 'left';
+      } else {
+        // 没有右子树
+        steps.push({
+          stack: stack.map(node => node.id),
+          stackVals: stack.map(node => node.val),
+          currentId: current.id,
+          currentVal: current.val,
+          result: [...result],
+          visitedIds: [...visitedIds],
+          action: 'move_right',
+          description: `节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 的右子树为空，准备回溯到上一个节点`
+        });
+        
+        // 设置current为null，准备从栈中取出下一个节点
+        current = null;
+        
+        // 如果栈还有节点，返回到节点处理阶段
+        if (stack.length > 0) {
+          processingPhase = 'node';
+        } else {
+          // 栈为空，遍历完成
+          break;
+        }
+      }
     } else {
-      // 没有右子树
-      steps.push({
-        stack: stack.map(node => node.id),
-        stackVals: stack.map(node => node.val),
-        currentId: current.id,
-        currentVal: current.val,
-        result: [...result],
-        visitedIds: [...visitedIds],
-        action: 'move_right',
-        description: `节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 的右子树为空，准备回溯到上一个节点`
-      });
-      
-      // 标记current为null，使下次循环直接从栈中弹出节点
-      current = null;
+      // 防止无限循环，如果当前阶段为right但current为null
+      if (processingPhase === 'right' && current === null) {
+        // 如果栈还有节点，返回到节点处理阶段
+        if (stack.length > 0) {
+          processingPhase = 'node';
+        } else {
+          // 栈为空，遍历完成
+          break;
+        }
+      }
     }
   }
   
