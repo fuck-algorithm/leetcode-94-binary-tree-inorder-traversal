@@ -184,7 +184,7 @@ button:disabled {
   justify-content: space-between;
   gap: 5px;
   margin: 2px 0;
-  max-height: 16vh;
+  max-height: 13vh;
   overflow-y: auto;
 }
 
@@ -196,7 +196,7 @@ button:disabled {
   border-radius: 4px;
   flex: 2;
   font-size: 0.8rem;
-  max-height: 16vh;
+  max-height: 13vh;
   overflow-y: auto;
 }
 
@@ -548,14 +548,16 @@ button:disabled {
 }
 
 .visualization-container {
-  flex: 1;
-  height: 100%;
-  min-height: 0;
+  height: calc(65vh - 20px);
+  overflow: hidden;
   display: flex;
+  align-items: center;
   justify-content: center;
-  min-width: 300px;
-  overflow: visible;
-  position: relative;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 0;
+  padding: 0;
 }
 
 .stack-container-wrapper {

@@ -545,12 +545,6 @@ export default function BinaryTreeInorderTraversal() {
             <span className="progress-step">{traversalSteps.length}</span>
           </div>
           
-          <div className="animation-status">
-            <div className="current-phase">
-              {traversalSteps[currentStep]?.description || '准备开始遍历'}
-            </div>
-          </div>
-          
           <div className="step-buttons">
             <button 
               onClick={resetSteps} 
@@ -590,10 +584,6 @@ export default function BinaryTreeInorderTraversal() {
             >
               <span className="button-icon">⏩</span> 结束
             </button>
-          </div>
-          
-          <div className="step-description">
-            {getCurrentStackState().description}
           </div>
         </div>
 
