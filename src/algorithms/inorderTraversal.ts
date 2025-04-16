@@ -103,13 +103,14 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
     description: '开始遍历，当前节点是根节点'
   });
   
-  // 主遍历过程
-  current = root; // 确保从根节点开始
-  while (current || stack.length) {
-    // 一直遍历到最左边的节点
+  // 重新实现中序遍历，确保正确处理左子树
+  current = root;
+  
+  while (true) {
+    // 阶段1: 向左遍历到底，将所有节点入栈
     while (current) {
-      // 将当前节点入栈
       stack.push(current);
+      
       steps.push({
         stack: stack.map(node => node.id),
         stackVals: stack.map(node => node.val),
@@ -121,13 +122,11 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
         description: `将节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 入栈，准备遍历左子树`
       });
       
-      // 检查是否有左子节点
+      // 如果有左子树，继续向左
       if (current.left) {
-        // 记录当前节点，方便调试
         const parentNode = current;
-        
-        // 有左子节点，移动到左子节点
         current = current.left;
+        
         steps.push({
           stack: stack.map(node => node.id),
           stackVals: stack.map(node => node.val),
@@ -139,7 +138,7 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
           description: `访问节点 ${parentNode.val} (ID: ${parentNode.id.substring(0, 6)}...) 的左子节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)`
         });
       } else {
-        // 没有左子节点，记录空节点
+        // 这个节点没有左子树，记录这个事实
         steps.push({
           stack: stack.map(node => node.id),
           stackVals: stack.map(node => node.val),
@@ -150,81 +149,80 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
           action: 'visit',
           description: `节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 的左子树为空，准备访问当前节点`
         });
-        break; // 退出内层循环，处理当前节点
+        
+        // 标记当前节点为null，使我们跳出内层循环
+        current = null;
       }
     }
     
-    // 从栈中弹出节点并访问
-    const node = stack.pop()!;
+    // 如果栈为空，遍历完成
+    if (stack.length === 0) {
+      break;
+    }
+    
+    // 阶段2: 弹出栈顶节点访问
+    current = stack.pop()!;
+    
     steps.push({
-      stack: stack.map(n => n.id),
-      stackVals: stack.map(n => n.val),
-      currentId: node.id,
-      currentVal: node.val,
+      stack: stack.map(node => node.id),
+      stackVals: stack.map(node => node.val),
+      currentId: current.id,
+      currentVal: current.val,
       result: [...result],
       visitedIds: [...visitedIds],
       action: 'pop',
-      description: `从栈中弹出节点 ${node.val} (ID: ${node.id.substring(0, 6)}...)，准备访问`
+      description: `从栈中弹出节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)，准备访问`
     });
     
-    // 访问当前节点，加入结果
-    result.push(node.val);
-    visitedIds.push(node.id); // 记录已访问的节点ID
+    // 访问节点
+    result.push(current.val);
+    visitedIds.push(current.id);
+    
     steps.push({
-      stack: stack.map(n => n.id),
-      stackVals: stack.map(n => n.val),
-      currentId: node.id,
-      currentVal: node.val,
+      stack: stack.map(node => node.id),
+      stackVals: stack.map(node => node.val),
+      currentId: current.id,
+      currentVal: current.val,
       result: [...result],
       visitedIds: [...visitedIds],
       action: 'visit',
-      description: `访问节点 ${node.val} (ID: ${node.id.substring(0, 6)}...)，将其加入结果`
+      description: `访问节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)，将其加入结果`
     });
     
-    // 检查是否有右子节点
-    if (node.right) {
-      // 有右子节点，移动到右子节点
-      current = node.right;
+    // 阶段3: 处理右子树
+    if (current.right) {
+      const parentNode = current;
+      current = current.right;
+      
       steps.push({
-        stack: stack.map(n => n.id),
-        stackVals: stack.map(n => n.val),
+        stack: stack.map(node => node.id),
+        stackVals: stack.map(node => node.val),
         currentId: current.id,
         currentVal: current.val,
         result: [...result],
         visitedIds: [...visitedIds],
         action: 'move_right',
-        description: `访问节点 ${node.val} (ID: ${node.id.substring(0, 6)}...) 的右子节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)`
+        description: `访问节点 ${parentNode.val} (ID: ${parentNode.id.substring(0, 6)}...) 的右子节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)`
       });
     } else {
-      // 没有右子节点
+      // 没有右子树
+      steps.push({
+        stack: stack.map(node => node.id),
+        stackVals: stack.map(node => node.val),
+        currentId: current.id,
+        currentVal: current.val,
+        result: [...result],
+        visitedIds: [...visitedIds],
+        action: 'move_right',
+        description: `节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 的右子树为空，准备回溯到上一个节点`
+      });
+      
+      // 标记current为null，使下次循环直接从栈中弹出节点
       current = null;
-      if (stack.length > 0) {
-        steps.push({
-          stack: stack.map(n => n.id),
-          stackVals: stack.map(n => n.val),
-          currentId: null,
-          currentVal: null,
-          result: [...result],
-          visitedIds: [...visitedIds],
-          action: 'move_right',
-          description: `节点 ${node.val} (ID: ${node.id.substring(0, 6)}...) 的右子树为空，回溯到上一个节点`
-        });
-      } else {
-        steps.push({
-          stack: [],
-          stackVals: [],
-          currentId: null,
-          currentVal: null,
-          result: [...result],
-          visitedIds: [...visitedIds],
-          action: 'move_right',
-          description: `节点 ${node.val} (ID: ${node.id.substring(0, 6)}...) 的右子树为空，栈已空，准备结束遍历`
-        });
-      }
     }
   }
   
-  // 步骤8：结束遍历
+  // 最终步骤：遍历完成
   steps.push({
     stack: [],
     stackVals: [],
