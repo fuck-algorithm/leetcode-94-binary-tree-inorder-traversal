@@ -11,8 +11,8 @@ export default function BinaryTreeInorderTraversal() {
   const [result, setResult] = useState<number[]>([]);
   const [root, setRoot] = useState<TreeNode | null>(null);
   const [method, setMethod] = useState<'recursive' | 'iterative'>('iterative');
-  const [currentNode, setCurrentNode] = useState<number | null>(null);
-  const [visitedNodes, setVisitedNodes] = useState<number[]>([]);
+  const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
+  const [visitedNodeIds, setVisitedNodeIds] = useState<string[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [animationSpeed, setAnimationSpeed] = useState<number>(1000);
@@ -98,8 +98,8 @@ export default function BinaryTreeInorderTraversal() {
     try {
       setError(null);
       // 重置访问状态
-      setVisitedNodes([]);
-      setCurrentNode(null);
+      setVisitedNodeIds([]);
+      setCurrentNodeId(null);
       setIsAnimating(false); // 确保不在动画状态
       setCurrentStep(0); // 重置步骤
       
@@ -148,9 +148,9 @@ export default function BinaryTreeInorderTraversal() {
           // 设置初始状态
           if (steps.length > 0) {
             const firstStep = steps[0];
-            setCurrentNode(firstStep.current);
+            setCurrentNodeId(firstStep.currentId);
             setResult([]);
-            setVisitedNodes([]);
+            setVisitedNodeIds([]);
           }
         }
       } else {
@@ -164,8 +164,8 @@ export default function BinaryTreeInorderTraversal() {
       // 发生错误时也需要重置状态
       setTraversalSteps([]);
       setResult([]);
-      setVisitedNodes([]);
-      setCurrentNode(null);
+      setVisitedNodeIds([]);
+      setCurrentNodeId(null);
     }
   };
 
@@ -177,18 +177,11 @@ export default function BinaryTreeInorderTraversal() {
       
       // 更新当前节点和结果
       const step = traversalSteps[nextStep];
-      setCurrentNode(step.current);
+      setCurrentNodeId(step.currentId);
       setResult([...step.result]);
       
-      // 标记已访问的节点
-      if (step.action === 'visit' && step.current !== null && step.result.includes(step.current)) {
-        setVisitedNodes(prev => {
-          if (!prev.includes(step.current!)) {
-            return [...prev, step.current!];
-          }
-          return prev;
-        });
-      }
+      // 使用步骤中记录的已访问节点列表
+      setVisitedNodeIds([...step.visitedIds]);
     }
     // 如果已经在最后一步，可以循环回到第一步
     else if (traversalSteps.length > 0) {
@@ -204,22 +197,11 @@ export default function BinaryTreeInorderTraversal() {
       
       // 更新当前节点和结果
       const step = traversalSteps[prevStep];
-      setCurrentNode(step.current);
+      setCurrentNodeId(step.currentId);
       setResult([...step.result]);
       
-      // 处理已访问节点的状态
-      // 回退时需要重新计算已访问节点集合，以匹配当前步骤的状态
-      const visitedNodesUpToCurrentStep = new Set<number>();
-      
-      // 遍历所有步骤直到当前步骤，找出已访问的节点
-      for (let i = 0; i <= prevStep; i++) {
-        const s = traversalSteps[i];
-        if (s.action === 'visit' && s.current !== null && s.result.includes(s.current)) {
-          visitedNodesUpToCurrentStep.add(s.current);
-        }
-      }
-      
-      setVisitedNodes(Array.from(visitedNodesUpToCurrentStep));
+      // 使用步骤中记录的已访问节点列表
+      setVisitedNodeIds([...step.visitedIds]);
     }
     // 如果已经在第一步，可以循环到最后一步
     else if (traversalSteps.length > 0) {
@@ -232,10 +214,10 @@ export default function BinaryTreeInorderTraversal() {
   const resetSteps = () => {
     // 即使已经在初始状态，也可以重新设置
     setCurrentStep(0);
-    setVisitedNodes([]);
+    setVisitedNodeIds([]);
     if (traversalSteps.length > 0) {
       const firstStep = traversalSteps[0];
-      setCurrentNode(firstStep.current);
+      setCurrentNodeId(firstStep.currentId);
       setResult([]);
     }
   };
@@ -248,18 +230,11 @@ export default function BinaryTreeInorderTraversal() {
       
       // 更新到最终状态
       const step = traversalSteps[lastStep];
-      setCurrentNode(step.current);
+      setCurrentNodeId(step.currentId);
       setResult([...step.result]);
       
-      // 收集所有已访问的节点
-      const allVisitedNodes = new Set<number>();
-      traversalSteps.forEach(s => {
-        if (s.action === 'visit' && s.current !== null && s.result.includes(s.current)) {
-          allVisitedNodes.add(s.current);
-        }
-      });
-      
-      setVisitedNodes(Array.from(allVisitedNodes));
+      // 使用步骤中记录的已访问节点列表
+      setVisitedNodeIds([...step.visitedIds]);
     }
   };
 
@@ -340,8 +315,8 @@ export default function BinaryTreeInorderTraversal() {
   useEffect(() => {
     if (root) {
       // 重置访问状态
-      setVisitedNodes([]);
-      setCurrentNode(null);
+      setVisitedNodeIds([]);
+      setCurrentNodeId(null);
       
       // 只有迭代方法支持手动模式
       if (method === 'iterative') {
@@ -352,7 +327,7 @@ export default function BinaryTreeInorderTraversal() {
         // 设置初始状态
         if (steps.length > 0) {
           const firstStep = steps[0];
-          setCurrentNode(firstStep.current);
+          setCurrentNodeId(firstStep.currentId);
           setResult([]);
         }
       } else {
@@ -379,7 +354,9 @@ export default function BinaryTreeInorderTraversal() {
     if (traversalSteps.length === 0 || currentStep >= traversalSteps.length) {
       return {
         stack: [],
-        current: null,
+        stackVals: [],
+        currentId: null,
+        currentVal: null,
         action: 'visit' as const,
         description: '未开始遍历'
       };
@@ -486,9 +463,9 @@ export default function BinaryTreeInorderTraversal() {
                 Math.min(window.innerWidth * 0.8, 1000) : 
                 window.innerWidth - 20} 
               height={window.innerHeight * 0.6}
-              highlightedNode={currentNode}
-              visitedNodes={visitedNodes}
-              stackNodes={getCurrentStackState().stack}
+              highlightedNodeId={currentNodeId}
+              visitedNodeIds={visitedNodeIds}
+              stackNodeIds={getCurrentStackState().stack}
             />
           )}
         </div>
@@ -497,7 +474,9 @@ export default function BinaryTreeInorderTraversal() {
           <div className="stack-container-wrapper">
             <StackVisualization 
               stack={getCurrentStackState().stack}
-              currentNode={getCurrentStackState().current}
+              stackVals={getCurrentStackState().stackVals}
+              currentId={getCurrentStackState().currentId}
+              currentVal={getCurrentStackState().currentVal}
               action={getCurrentStackState().action}
               description={getCurrentStackState().description}
             />
@@ -526,18 +505,18 @@ export default function BinaryTreeInorderTraversal() {
                 // 更新节点状态和结果
                 if (traversalSteps.length > 0) {
                   const targetStep = traversalSteps[step];
-                  setCurrentNode(targetStep.current);
+                  setCurrentNodeId(targetStep.currentId);
                   setResult([...targetStep.result]);
                   
                   // 更新已访问节点
-                  const visitedNodesUpToCurrentStep = new Set<number>();
+                  const visitedNodeIdsUpToCurrentStep = new Set<string>();
                   for (let i = 0; i <= step; i++) {
                     const s = traversalSteps[i];
-                    if (s.action === 'visit' && s.current !== null && s.result.includes(s.current)) {
-                      visitedNodesUpToCurrentStep.add(s.current);
+                    if (s.action === 'visit' && s.currentId !== null && s.visitedIds.includes(s.currentId)) {
+                      visitedNodeIdsUpToCurrentStep.add(s.currentId);
                     }
                   }
-                  setVisitedNodes(Array.from(visitedNodesUpToCurrentStep));
+                  setVisitedNodeIds(Array.from(visitedNodeIdsUpToCurrentStep));
                 }
               }}
               className="step-progress-bar"

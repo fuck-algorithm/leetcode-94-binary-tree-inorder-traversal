@@ -6,12 +6,12 @@ interface TreeVisualizationProps {
   data: TreeNodeData | null;
   width: number;
   height: number;
-  highlightedNode?: number | null;  // 当前正在访问的节点
-  visitedNodes?: number[];  // 已经访问过的节点列表
-  stackNodes?: number[];    // 当前在栈中的节点列表
+  highlightedNodeId?: string | null;  // 修改为使用节点ID
+  visitedNodeIds?: string[];  // 修改为使用节点ID列表
+  stackNodeIds?: string[];    // 修改为使用节点ID列表
 }
 
-export default function TreeVisualization({ data, width, height, highlightedNode, visitedNodes = [], stackNodes = [] }: TreeVisualizationProps) {
+export default function TreeVisualization({ data, width, height, highlightedNodeId, visitedNodeIds = [], stackNodeIds = [] }: TreeVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width, height });
@@ -567,20 +567,20 @@ export default function TreeVisualization({ data, width, height, highlightedNode
     nodeGroups.append('circle')
       .attr('r', nodeSize / finalScale)
       .attr('fill', (d: d3.HierarchyPointNode<TreeNodeData>) => {
-        const nodeVal = d.data.name;
+        const nodeId = d.data.nodeId;
         
         // 当前正在访问的节点 - 黄色
-        if (highlightedNode !== undefined && nodeVal === highlightedNode?.toString()) {
+        if (highlightedNodeId !== undefined && nodeId === highlightedNodeId) {
           return '#f1c40f'; // 黄色
         }
         
         // 已经访问过的节点 - 绿色
-        if (visitedNodes.map(String).includes(nodeVal)) {
+        if (visitedNodeIds.includes(nodeId)) {
           return '#2ecc71'; // 绿色
         }
         
         // 在栈中的节点 - 蓝色
-        if (stackNodes.map(String).includes(nodeVal)) {
+        if (stackNodeIds.includes(nodeId)) {
           return '#3498db'; // 蓝色
         }
         
@@ -602,10 +602,10 @@ export default function TreeVisualization({ data, width, height, highlightedNode
       .attr('font-weight', 'bold')
       .attr('fill', (d: d3.HierarchyPointNode<TreeNodeData>) => {
         // 为高亮节点使用白色文本，提高可读性
-        if (highlightedNode !== undefined && d.data.name === highlightedNode?.toString()) {
+        if (highlightedNodeId !== undefined && d.data.nodeId === highlightedNodeId) {
           return 'white';
         }
-        if (visitedNodes.map(String).includes(d.data.name)) {
+        if (visitedNodeIds.includes(d.data.nodeId)) {
           return 'white';
         }
         return 'white';
@@ -677,7 +677,7 @@ export default function TreeVisualization({ data, width, height, highlightedNode
         .attr('font-size', `${legendFontSize}px`)
         .text(item.text);
     });
-  }, [data, dimensions, highlightedNode, visitedNodes, stackNodes]);
+  }, [data, dimensions, highlightedNodeId, visitedNodeIds, stackNodeIds]);
   
   // 计算树的深度
   const determineTreeDepth = (node: TreeNodeData | null): number => {

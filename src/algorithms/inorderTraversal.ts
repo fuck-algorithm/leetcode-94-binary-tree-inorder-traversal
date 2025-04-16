@@ -47,24 +47,31 @@ export function inorderTraversalIterative(root: TreeNode | null): number[] {
 
 // 带栈状态跟踪的迭代中序遍历
 export interface TraversalStep {
-  stack: number[]; // 当前栈中节点的值
-  current: number | null; // 当前正在处理的节点值
+  stack: string[]; // 当前栈中节点的ID
+  stackVals: number[]; // 当前栈中节点的值（用于显示）
+  currentId: string | null; // 当前正在处理的节点ID
+  currentVal: number | null; // 当前正在处理的节点值
   result: number[]; // 当前的结果数组
   action: 'push' | 'pop' | 'visit' | 'move_right'; // 当前的操作类型
   description: string; // 操作的描述
+  visitedIds: string[]; // 已访问节点的ID列表
 }
 
 export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[] {
   const steps: TraversalStep[] = [];
   const result: number[] = [];
   const stack: TreeNode[] = [];
+  const visitedIds: string[] = []; // 跟踪已访问的节点ID
   let current = root;
   
   // 步骤1：初始化
   steps.push({
     stack: [],
-    current: null,
+    stackVals: [],
+    currentId: null,
+    currentVal: null,
     result: [],
+    visitedIds: [],
     action: 'visit',
     description: '初始化：展示二叉树结构、空栈和空结果'
   });
@@ -73,8 +80,11 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
   if (!root) {
     steps.push({
       stack: [],
-      current: null,
+      stackVals: [],
+      currentId: null,
+      currentVal: null,
       result: [],
+      visitedIds: [],
       action: 'visit',
       description: '树为空，遍历结束'
     });
@@ -84,8 +94,11 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
   // 步骤2：访问根节点
   steps.push({
     stack: [],
-    current: root.val,
+    stackVals: [],
+    currentId: root.id,
+    currentVal: root.val,
     result: [],
+    visitedIds: [],
     action: 'visit',
     description: '开始遍历，当前节点是根节点'
   });
@@ -98,35 +111,44 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
       // 将当前节点入栈
       stack.push(current);
       steps.push({
-        stack: stack.map(node => node.val),
-        current: current.val,
+        stack: stack.map(node => node.id),
+        stackVals: stack.map(node => node.val),
+        currentId: current.id,
+        currentVal: current.val,
         result: [...result],
+        visitedIds: [...visitedIds],
         action: 'push',
-        description: `将节点 ${current.val} 入栈，准备遍历左子树`
+        description: `将节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 入栈，准备遍历左子树`
       });
       
       // 检查是否有左子节点
       if (current.left) {
         // 记录当前节点，方便调试
-        const parentNode = current.val;
+        const parentNode = current;
         
         // 有左子节点，移动到左子节点
         current = current.left;
         steps.push({
-          stack: stack.map(node => node.val),
-          current: current.val,
+          stack: stack.map(node => node.id),
+          stackVals: stack.map(node => node.val),
+          currentId: current.id,
+          currentVal: current.val,
           result: [...result],
+          visitedIds: [...visitedIds],
           action: 'visit',
-          description: `访问节点 ${parentNode} 的左子节点 ${current.val}`
+          description: `访问节点 ${parentNode.val} (ID: ${parentNode.id.substring(0, 6)}...) 的左子节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)`
         });
       } else {
         // 没有左子节点，记录空节点
         steps.push({
-          stack: stack.map(node => node.val),
-          current: current.val,
+          stack: stack.map(node => node.id),
+          stackVals: stack.map(node => node.val),
+          currentId: current.id,
+          currentVal: current.val,
           result: [...result],
+          visitedIds: [...visitedIds],
           action: 'visit',
-          description: `节点 ${current.val} 的左子树为空，准备访问当前节点`
+          description: `节点 ${current.val} (ID: ${current.id.substring(0, 6)}...) 的左子树为空，准备访问当前节点`
         });
         break; // 退出内层循环，处理当前节点
       }
@@ -135,21 +157,28 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
     // 从栈中弹出节点并访问
     const node = stack.pop()!;
     steps.push({
-      stack: stack.map(n => n.val),
-      current: node.val,
+      stack: stack.map(n => n.id),
+      stackVals: stack.map(n => n.val),
+      currentId: node.id,
+      currentVal: node.val,
       result: [...result],
+      visitedIds: [...visitedIds],
       action: 'pop',
-      description: `从栈中弹出节点 ${node.val}，准备访问`
+      description: `从栈中弹出节点 ${node.val} (ID: ${node.id.substring(0, 6)}...)，准备访问`
     });
     
     // 访问当前节点，加入结果
     result.push(node.val);
+    visitedIds.push(node.id); // 记录已访问的节点ID
     steps.push({
-      stack: stack.map(n => n.val),
-      current: node.val,
+      stack: stack.map(n => n.id),
+      stackVals: stack.map(n => n.val),
+      currentId: node.id,
+      currentVal: node.val,
       result: [...result],
+      visitedIds: [...visitedIds],
       action: 'visit',
-      description: `访问节点 ${node.val}，将其加入结果`
+      description: `访问节点 ${node.val} (ID: ${node.id.substring(0, 6)}...)，将其加入结果`
     });
     
     // 检查是否有右子节点
@@ -157,30 +186,39 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
       // 有右子节点，移动到右子节点
       current = node.right;
       steps.push({
-        stack: stack.map(n => n.val),
-        current: current.val,
+        stack: stack.map(n => n.id),
+        stackVals: stack.map(n => n.val),
+        currentId: current.id,
+        currentVal: current.val,
         result: [...result],
+        visitedIds: [...visitedIds],
         action: 'move_right',
-        description: `访问节点 ${node.val} 的右子节点 ${current.val}`
+        description: `访问节点 ${node.val} (ID: ${node.id.substring(0, 6)}...) 的右子节点 ${current.val} (ID: ${current.id.substring(0, 6)}...)`
       });
     } else {
       // 没有右子节点
       current = null;
       if (stack.length > 0) {
         steps.push({
-          stack: stack.map(n => n.val),
-          current: null,
+          stack: stack.map(n => n.id),
+          stackVals: stack.map(n => n.val),
+          currentId: null,
+          currentVal: null,
           result: [...result],
+          visitedIds: [...visitedIds],
           action: 'move_right',
-          description: `节点 ${node.val} 的右子树为空，回溯到上一个节点`
+          description: `节点 ${node.val} (ID: ${node.id.substring(0, 6)}...) 的右子树为空，回溯到上一个节点`
         });
       } else {
         steps.push({
           stack: [],
-          current: null,
+          stackVals: [],
+          currentId: null,
+          currentVal: null,
           result: [...result],
+          visitedIds: [...visitedIds],
           action: 'move_right',
-          description: `节点 ${node.val} 的右子树为空，栈已空，准备结束遍历`
+          description: `节点 ${node.val} (ID: ${node.id.substring(0, 6)}...) 的右子树为空，栈已空，准备结束遍历`
         });
       }
     }
@@ -189,8 +227,11 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
   // 步骤8：结束遍历
   steps.push({
     stack: [],
-    current: null,
+    stackVals: [],
+    currentId: null,
+    currentVal: null,
     result: [...result],
+    visitedIds: [...visitedIds],
     action: 'visit',
     description: `遍历完成，结果为 [${result.join(', ')}]`
   });

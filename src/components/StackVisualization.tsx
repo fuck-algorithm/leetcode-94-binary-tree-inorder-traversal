@@ -2,15 +2,19 @@ import React from 'react';
 import './StackVisualization.css';
 
 interface StackVisualizationProps {
-  stack: number[];
-  currentNode: number | null;
+  stack: string[];  // 节点ID
+  stackVals: number[]; // 节点值
+  currentId: string | null;
+  currentVal: number | null;
   action: 'push' | 'pop' | 'visit' | 'move_right';
   description: string;
 }
 
 const StackVisualization: React.FC<StackVisualizationProps> = ({ 
   stack, 
-  currentNode, 
+  stackVals,
+  currentId, 
+  currentVal,
   action,
   description 
 }) => {
@@ -55,15 +59,16 @@ const StackVisualization: React.FC<StackVisualizationProps> = ({
       </div>
       
       <div className="stack-container">
-        {stack.length === 0 ? (
+        {stackVals.length === 0 ? (
           <div className="empty-stack">栈为空</div>
         ) : (
           <>
             <div className="stack-elements">
-              {stack.map((element, index) => (
+              {stackVals.map((element, index) => (
                 <div 
-                  key={`${element}-${index}`} 
-                  className={`stack-element ${index === stack.length - 1 ? 'stack-top' : ''}`}
+                  key={`${stack[index]}`} 
+                  className={`stack-element ${index === stackVals.length - 1 ? 'stack-top' : ''}`}
+                  title={`ID: ${stack[index].substring(0, 6)}...`}
                 >
                   {element}
                 </div>
@@ -76,8 +81,10 @@ const StackVisualization: React.FC<StackVisualizationProps> = ({
       
       <div className="current-node">
         <h4>当前节点</h4>
-        {currentNode !== null ? (
-          <div className="node-value">{currentNode}</div>
+        {currentVal !== null ? (
+          <div className="node-value" title={`ID: ${currentId?.substring(0, 6)}...`}>
+            {currentVal}
+          </div>
         ) : (
           <div className="node-null">null</div>
         )}

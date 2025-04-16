@@ -1,10 +1,12 @@
 export class TreeNode {
   val: number;
+  id: string;
   left: TreeNode | null;
   right: TreeNode | null;
 
   constructor(val: number, left: TreeNode | null = null, right: TreeNode | null = null) {
     this.val = val;
+    this.id = `node_${Math.random().toString(36).substring(2, 15)}`;
     this.left = left;
     this.right = right;
   }
@@ -13,6 +15,8 @@ export class TreeNode {
 // 用于D3可视化的树节点接口
 export interface TreeNodeData {
   name: string;
+  nodeId: string;
+  val: number;
   children?: TreeNodeData[];
   highlighted?: boolean;
 }
@@ -51,6 +55,8 @@ export function treeToD3Format(root: TreeNode | null): TreeNodeData | null {
   
   const result: TreeNodeData = {
     name: root.val.toString(),
+    nodeId: root.id,
+    val: root.val
   };
   
   const children: TreeNodeData[] = [];
