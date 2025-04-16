@@ -340,8 +340,8 @@ export default function BinaryTreeInorderTraversal() {
 
   // 修改初始化组件的useEffect
   useEffect(() => {
-    // 组件加载时，自动构建树
-    buildTree();
+    // 组件加载时，自动生成随机树，而不是使用默认值
+    generateRandomTree();
   }, []);
 
   // 当输入变更时构建树
