@@ -488,6 +488,7 @@ export default function BinaryTreeInorderTraversal() {
               height={window.innerHeight * 0.6}
               highlightedNode={currentNode}
               visitedNodes={visitedNodes}
+              stackNodes={getCurrentStackState().stack}
             />
           )}
         </div>

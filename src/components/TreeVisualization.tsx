@@ -8,9 +8,10 @@ interface TreeVisualizationProps {
   height: number;
   highlightedNode?: number | null;  // 当前正在访问的节点
   visitedNodes?: number[];  // 已经访问过的节点列表
+  stackNodes?: number[];    // 当前在栈中的节点列表
 }
 
-export default function TreeVisualization({ data, width, height, highlightedNode, visitedNodes = [] }: TreeVisualizationProps) {
+export default function TreeVisualization({ data, width, height, highlightedNode, visitedNodes = [], stackNodes = [] }: TreeVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width, height });
@@ -578,6 +579,11 @@ export default function TreeVisualization({ data, width, height, highlightedNode
           return '#2ecc71'; // 绿色
         }
         
+        // 在栈中的节点 - 蓝色
+        if (stackNodes.map(String).includes(nodeVal)) {
+          return '#3498db'; // 蓝色
+        }
+        
         // 还未访问的节点 - 灰色
         return '#95a5a6'; // 灰色
       })
@@ -620,6 +626,7 @@ export default function TreeVisualization({ data, width, height, highlightedNode
       { color: '#95a5a6', text: '未访问' },
       { color: '#f1c40f', text: '正在访问' },
       { color: '#2ecc71', text: '已访问' },
+      { color: '#3498db', text: '在栈中' },
       { color: '#666', textLeft: '左', textRight: '右', text: '左/右子树' }
     ];
     
@@ -670,7 +677,7 @@ export default function TreeVisualization({ data, width, height, highlightedNode
         .attr('font-size', `${legendFontSize}px`)
         .text(item.text);
     });
-  }, [data, dimensions, highlightedNode, visitedNodes]);
+  }, [data, dimensions, highlightedNode, visitedNodes, stackNodes]);
   
   // 计算树的深度
   const determineTreeDepth = (node: TreeNodeData | null): number => {
