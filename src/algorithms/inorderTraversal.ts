@@ -122,7 +122,7 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
           current: stack[stack.length - 1].val, // 保持当前节点不变
           result: [...result],
           action: 'visit',
-          description: '左子树为空，准备访问当前节点'
+          description: `节点 ${current.val} 的左子树为空，准备访问当前节点`
         });
         break; // 退出内层循环，处理当前节点
       }
