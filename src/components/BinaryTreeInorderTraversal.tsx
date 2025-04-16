@@ -495,6 +495,7 @@ export default function BinaryTreeInorderTraversal() {
               currentVal={getCurrentStackState().currentVal}
               action={getCurrentStackState().action}
               description={getCurrentStackState().description}
+              result={result}
             />
           </div>
         )}
@@ -584,29 +585,6 @@ export default function BinaryTreeInorderTraversal() {
             >
               <span className="button-icon">⏩</span> 结束
             </button>
-          </div>
-        </div>
-
-        <div className="result-section">
-          <h2>遍历结果</h2>
-          <div className="result-array">
-            {result.length === 0 ? (
-              <span>[]</span>
-            ) : (
-              <span>[{result.join(', ')}]</span>
-            )}
-          </div>
-          
-          <div className="script-info">
-            <h3>中序遍历步骤</h3>
-            <ol className="traversal-steps">
-              <li className={currentStep < 1 ? 'current-step' : 'completed-step'}>初始化</li>
-              <li className={currentStep >= 1 && currentStep < 3 ? 'current-step' : (currentStep >= 3 ? 'completed-step' : '')}>访问根节点</li>
-              <li className={currentStep >= 3 && !result.length ? 'current-step' : (result.length ? 'completed-step' : '')}>遍历左子树</li>
-              <li className={result.length > 0 && result.length < traversalSteps[traversalSteps.length-1]?.result.length ? 'current-step' : (currentStep === traversalSteps.length-1 ? 'completed-step' : '')}>访问节点</li>
-              <li className={currentStep >= traversalSteps.length-3 && currentStep < traversalSteps.length-1 ? 'current-step' : (currentStep === traversalSteps.length-1 ? 'completed-step' : '')}>遍历右子树</li>
-              <li className={currentStep === traversalSteps.length-1 ? 'current-step' : ''}>完成遍历</li>
-            </ol>
           </div>
         </div>
       </div>

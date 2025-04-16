@@ -8,6 +8,7 @@ interface StackVisualizationProps {
   currentVal: number | null;
   action: 'push' | 'pop' | 'visit' | 'move_right';
   description: string;
+  result?: number[]; // 添加遍历结果参数
 }
 
 const StackVisualization: React.FC<StackVisualizationProps> = ({ 
@@ -16,7 +17,8 @@ const StackVisualization: React.FC<StackVisualizationProps> = ({
   currentId, 
   currentVal,
   action,
-  description 
+  description,
+  result = [] // 设置默认值为空数组
 }) => {
   // 根据操作类型获取对应的图标和描述
   const getActionInfo = () => {
@@ -96,6 +98,18 @@ const StackVisualization: React.FC<StackVisualizationProps> = ({
           <span>{text}</span>
         </div>
         <div className="operation-description">{description}</div>
+      </div>
+
+      {/* 添加遍历结果显示 */}
+      <div className="traversal-result">
+        <h4>遍历结果</h4>
+        <div className="result-array">
+          {result.length === 0 ? (
+            <span>[]</span>
+          ) : (
+            <span>[{result.join(', ')}]</span>
+          )}
+        </div>
       </div>
     </div>
   );
