@@ -36,9 +36,14 @@ export default function BinaryTreeInorderTraversal() {
       // 开始自动播放
       setIsAutoPlaying(true);
       autoPlayTimerRef.current = setInterval(() => {
-        // 如果到达最后一步，循环回到第一步
+        // 如果到达最后一步，停止自动播放
         if (currentStep >= traversalSteps.length - 1) {
-          resetSteps();
+          // 停止自动播放
+          if (autoPlayTimerRef.current) {
+            clearInterval(autoPlayTimerRef.current);
+            autoPlayTimerRef.current = null;
+          }
+          setIsAutoPlaying(false);
         } else {
           goToNextStep();
         }
@@ -51,9 +56,14 @@ export default function BinaryTreeInorderTraversal() {
     if (isAutoPlaying && autoPlayTimerRef.current) {
       clearInterval(autoPlayTimerRef.current);
       autoPlayTimerRef.current = setInterval(() => {
-        // 如果到达最后一步，循环回到第一步
+        // 如果到达最后一步，停止自动播放
         if (currentStep >= traversalSteps.length - 1) {
-          resetSteps();
+          // 停止自动播放
+          if (autoPlayTimerRef.current) {
+            clearInterval(autoPlayTimerRef.current);
+            autoPlayTimerRef.current = null;
+          }
+          setIsAutoPlaying(false);
         } else {
           goToNextStep();
         }
@@ -80,7 +90,13 @@ export default function BinaryTreeInorderTraversal() {
       autoPlayTimerRef.current = setInterval(() => {
         setCurrentStep(prev => {
           if (prev >= traversalSteps.length - 1) {
-            return 0;
+            // 停止自动播放
+            if (autoPlayTimerRef.current) {
+              clearInterval(autoPlayTimerRef.current);
+              autoPlayTimerRef.current = null;
+            }
+            setIsAutoPlaying(false);
+            return prev;
           }
           return prev + 1;
         });
