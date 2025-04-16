@@ -511,6 +511,44 @@ export default function BinaryTreeInorderTraversal() {
             <span>步骤: {getStepProgress()}</span>
           </div>
           
+          <div className="progress-bar-container">
+            <span className="progress-step">{currentStep + 1}</span>
+            <input 
+              type="range"
+              min="0"
+              max={traversalSteps.length > 0 ? traversalSteps.length - 1 : 0}
+              value={currentStep}
+              onChange={(e) => {
+                const step = parseInt(e.target.value);
+                setCurrentStep(step);
+                
+                // 更新节点状态和结果
+                if (traversalSteps.length > 0) {
+                  const targetStep = traversalSteps[step];
+                  setCurrentNode(targetStep.current);
+                  setResult([...targetStep.result]);
+                  
+                  // 更新已访问节点
+                  const visitedNodesUpToCurrentStep = new Set<number>();
+                  for (let i = 0; i <= step; i++) {
+                    const s = traversalSteps[i];
+                    if (s.action === 'visit' && s.current !== null && s.result.includes(s.current)) {
+                      visitedNodesUpToCurrentStep.add(s.current);
+                    }
+                  }
+                  setVisitedNodes(Array.from(visitedNodesUpToCurrentStep));
+                }
+              }}
+              className="step-progress-bar"
+              style={{
+                '--min': 0,
+                '--max': traversalSteps.length > 0 ? traversalSteps.length - 1 : 0,
+                '--value': currentStep
+              } as React.CSSProperties}
+            />
+            <span className="progress-step">{traversalSteps.length}</span>
+          </div>
+          
           <div className="animation-status">
             <div className="current-phase">
               {traversalSteps[currentStep]?.description || '准备开始遍历'}

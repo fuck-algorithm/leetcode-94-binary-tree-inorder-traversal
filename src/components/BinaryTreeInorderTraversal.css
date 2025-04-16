@@ -294,6 +294,117 @@ button:disabled {
   font-size: 0.8rem;
 }
 
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+  width: 100%;
+}
+
+.progress-step {
+  font-size: 0.75rem;
+  color: #7f8c8d;
+  min-width: 20px;
+  text-align: center;
+}
+
+.step-progress-bar {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #ecf0f1;
+  border-radius: 4px;
+  outline: none;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.step-progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc((var(--value) / var(--max)) * 100%);
+  height: 100%;
+  background-color: #3498db;
+  border-radius: 4px;
+  z-index: 1;
+}
+
+.step-progress-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3498db;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.step-progress-bar::-webkit-slider-thumb:hover {
+  background: #2980b9;
+  transform: scale(1.1);
+}
+
+.step-progress-bar::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3498db;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.step-progress-bar::-moz-range-thumb:hover {
+  background: #2980b9;
+  transform: scale(1.1);
+}
+
+.step-progress-bar::-ms-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3498db;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.step-progress-bar::-ms-thumb:hover {
+  background: #2980b9;
+  transform: scale(1.1);
+}
+
+/* 进度条的轨道填充 */
+.step-progress-bar::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.step-progress-bar::-moz-range-track {
+  height: 6px;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.step-progress-bar::-ms-track {
+  height: 6px;
+  border-radius: 4px;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
 .progress-icon {
   font-size: 1.1rem;
 }
