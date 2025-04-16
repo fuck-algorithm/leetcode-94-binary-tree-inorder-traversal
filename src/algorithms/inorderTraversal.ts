@@ -91,6 +91,7 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
   });
   
   // 主遍历过程
+  current = root; // 确保从根节点开始
   while (current || stack.length) {
     // 一直遍历到最左边的节点
     while (current) {
@@ -106,6 +107,9 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
       
       // 检查是否有左子节点
       if (current.left) {
+        // 记录当前节点，方便调试
+        const parentNode = current.val;
+        
         // 有左子节点，移动到左子节点
         current = current.left;
         steps.push({
@@ -113,13 +117,13 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
           current: current.val,
           result: [...result],
           action: 'visit',
-          description: `访问左子节点 ${current.val}`
+          description: `访问节点 ${parentNode} 的左子节点 ${current.val}`
         });
       } else {
         // 没有左子节点，记录空节点
         steps.push({
           stack: stack.map(node => node.val),
-          current: stack[stack.length - 1].val, // 保持当前节点不变
+          current: current.val,
           result: [...result],
           action: 'visit',
           description: `节点 ${current.val} 的左子树为空，准备访问当前节点`
@@ -157,7 +161,7 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
         current: current.val,
         result: [...result],
         action: 'move_right',
-        description: `访问右子节点 ${current.val}`
+        description: `访问节点 ${node.val} 的右子节点 ${current.val}`
       });
     } else {
       // 没有右子节点
@@ -168,7 +172,7 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
           current: null,
           result: [...result],
           action: 'move_right',
-          description: '右子树为空，回溯到上一个节点'
+          description: `节点 ${node.val} 的右子树为空，回溯到上一个节点`
         });
       } else {
         steps.push({
@@ -176,7 +180,7 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
           current: null,
           result: [...result],
           action: 'move_right',
-          description: '右子树为空，栈已空，准备结束遍历'
+          description: `节点 ${node.val} 的右子树为空，栈已空，准备结束遍历`
         });
       }
     }
