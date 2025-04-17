@@ -1,0 +1,36 @@
+name: 部署到Github Pages
+
+on:
+  push:
+    branches:
+      - main  # 当推送到main分支时触发
+
+# 设置GITHUB_TOKEN的权限
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: 安装依赖
+        run: npm ci
+        
+      - name: 构建项目
+        run: npm run build
+        
+      - name: 部署到GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist     # 要部署的文件夹
+          branch: gh-pages # 部署到的分支
+          clean: true      # 自动清理旧文件 
