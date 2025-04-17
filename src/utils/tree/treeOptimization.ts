@@ -20,11 +20,12 @@ export const optimizeTreeLayout = (
     nodesByDepth.get(node.depth)!.push(node);
   });
   
-  // 计算最小间距 - 增加左侧节点的间距
-  const minSpacing = nodeSize * (totalNodes > 15 ? 5 : totalNodes > 7 ? 7 : 8);
+  // 计算最小间距 - 增加节点间距，特别是对于小型树
+  const minSpacing = nodeSize * (totalNodes > 15 ? 5.5 : totalNodes > 7 ? 7.5 : 9.5);
   
-  // 对左侧节点使用更大的间距系数
-  const leftNodeSpacingFactor = 1.4; // 为左侧节点提供额外40%的间距
+  // 为左侧节点提供更大的间距系数
+  const leftNodeSpacingFactor = 1.65; // 为左侧节点提供额外65%的间距
+  const rightNodeSpacingFactor = 1.2; // 为右侧节点提供额外20%的间距
   
   // 从底部开始处理
   const maxDepth = Math.max(...Array.from(nodesByDepth.keys()));
@@ -40,12 +41,17 @@ export const optimizeTreeLayout = (
       const currentNode = nodes[i];
       const prevNode = nodes[i - 1];
       
-      // 为左侧节点使用更大的间距
+      // 根据节点类型使用不同的间距
       let adjustedMinDistance = minSpacing;
       
       // 如果前一个节点是某个节点的左子节点，增加间距
       if ((prevNode as any).isLeftChild) {
         adjustedMinDistance *= leftNodeSpacingFactor;
+      }
+      
+      // 如果当前节点是某个节点的右子节点，也适当增加间距
+      if ((currentNode as any).isRightChild) {
+        adjustedMinDistance *= rightNodeSpacingFactor;
       }
       
       if (currentNode.x - prevNode.x < adjustedMinDistance) {
@@ -72,7 +78,7 @@ export const optimizeTreeLayout = (
           // 为左右子节点使用不同的间距
           const expectedX = isLeftChild 
             ? parent.x - minSpacing * leftNodeSpacingFactor // 左子节点使用更大间距
-            : parent.x + minSpacing;
+            : parent.x + minSpacing * rightNodeSpacingFactor; // 右子节点也使用调整后的间距
           
           // 如果节点不在预期位置，移动它
           if (Math.abs(node.x - expectedX) > 1) {
@@ -86,20 +92,57 @@ export const optimizeTreeLayout = (
           const rightChild = parent.children[1];
           
           // 确保左子树在父节点左侧，使用更大间距
-          if (leftChild.x >= parent.x - minSpacing * 0.5) {
+          if (leftChild.x >= parent.x - minSpacing * 0.6) {
             const shift = (parent.x - minSpacing * leftNodeSpacingFactor) - leftChild.x;
             shiftSubtree(leftChild, shift);
           }
           
           // 确保右子树在父节点右侧
-          if (rightChild.x <= parent.x + minSpacing * 0.5) {
-            const shift = (parent.x + minSpacing) - rightChild.x;
+          if (rightChild.x <= parent.x + minSpacing * 0.6) {
+            const shift = (parent.x + minSpacing * rightNodeSpacingFactor) - rightChild.x;
             shiftSubtree(rightChild, shift);
           }
         }
       });
     }
   }
+  
+  // 添加重叠检测和调整
+  const detectAndFixOverlap = () => {
+    // 获取所有节点
+    const allNodes = treeData.descendants();
+    const minNodeDistance = nodeSize * 2.5; // 节点间的最小距离
+    
+    // 检查每对节点是否重叠
+    for (let i = 0; i < allNodes.length; i++) {
+      const node = allNodes[i];
+      for (let j = i + 1; j < allNodes.length; j++) {
+        const otherNode = allNodes[j];
+        
+        // 只检查不在同一垂直线上的节点（相同深度的不同子树）
+        if (Math.abs(node.y - otherNode.y) < nodeSize * 1.5) {
+          const xDistance = Math.abs(node.x - otherNode.x);
+          
+          // 如果水平距离太小，可能会发生重叠
+          if (xDistance < minNodeDistance) {
+            // 计算需要移动的距离
+            const offset = minNodeDistance - xDistance + nodeSize * 0.2;
+            
+            // 将右侧节点向右移动
+            if (node.x < otherNode.x) {
+              shiftSubtree(otherNode, offset);
+            } else {
+              shiftSubtree(node, offset);
+            }
+          }
+        }
+      }
+    }
+  };
+  
+  // 运行重叠检测和修复（进行两轮以处理连锁反应）
+  detectAndFixOverlap();
+  detectAndFixOverlap();
   
   // 调整整个树的位置
   const stackPanelWidth = 280; // 栈面板的宽度
@@ -114,11 +157,11 @@ export const optimizeTreeLayout = (
   });
   
   // 计算整体偏移量
-  const treeWidth = maxX - minX;
+  // const treeWidth = maxX - minX; // 暂未使用
   const horizontalSpacing = nodeSize * (totalNodes > 15 ? 8 : 12);
   
   // 确保左侧有足够空间，将整个树向右移动
-  const leftMarginNeeded = Math.abs(minX) + nodeSize * 2.5;
+  const leftMarginNeeded = Math.abs(minX) + nodeSize * 3.5;
   if (leftMarginNeeded > Math.abs(minX)) {
     // 向右偏移整个树
     const rightOffset = leftMarginNeeded - Math.abs(minX);
@@ -142,4 +185,7 @@ export const optimizeTreeLayout = (
       node.x += centeringOffset;
     });
   }
+  
+  // 最终再进行一次重叠检测
+  detectAndFixOverlap();
 }; 
