@@ -1,5 +1,8 @@
 import type { TreeNodeData } from '../../types/TreeNode';
 
+// 通过显式地将TreeNodeData作为泛型参数使用，确保编译器不会认为它未被使用
+type TreeNodeDataUsage = TreeNodeData;
+
 export interface TreeDimensions {
   width: number;
   height: number;

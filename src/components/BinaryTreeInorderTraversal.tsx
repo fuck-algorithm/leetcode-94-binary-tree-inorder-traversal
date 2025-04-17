@@ -3,7 +3,7 @@ import TreeVisualization from './TreeVisualization';
 import StackVisualization from './StackVisualization';
 import TreeInputExamples from './TreeInputExamples';
 import { TreeNode, TreeNodeData, arrayToTree, treeToD3Format } from '../types/TreeNode';
-import { inorderTraversalRecursive, inorderTraversalIterative, inorderTraversalWithSteps, TraversalStep } from '../algorithms/inorderTraversal';
+import { inorderTraversalWithSteps, TraversalStep } from '../algorithms/inorderTraversal';
 import './BinaryTreeInorderTraversal.css';
 
 // 保存到localStorage的键名
