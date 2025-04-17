@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import TreeVisualization from './TreeVisualization';
 import StackVisualization from './StackVisualization';
 import TreeInputExamples from './TreeInputExamples';
@@ -10,6 +10,89 @@ import './BinaryTreeInorderTraversal.css';
 const STORAGE_KEYS = {
   ANIMATION_SPEED: 'btit_animation_speed',
   TRAVERSAL_METHOD: 'btit_traversal_method'
+};
+
+// 速度控制配置
+const SPEED_CONFIG = {
+  MIN: 100, // 最快速度（毫秒）
+  MAX: 5000, // 最慢速度（毫秒）
+  DEFAULT: 500, // 默认速度（毫秒）
+  STEP: 100 // 滑块步长
+};
+
+// 添加可视化底部控制组件
+interface VisualizationBottomControlsProps {
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
+  traversalSteps: any[]; // 根据实际类型修改
+  setCurrentNodeId: (id: string | null) => void;
+  setResult: (result: any[]) => void; // 根据实际类型修改
+  setVisitedNodeIds: (ids: string[]) => void;
+}
+
+const VisualizationBottomControls: React.FC<VisualizationBottomControlsProps> = ({ 
+  currentStep, 
+  setCurrentStep, 
+  traversalSteps, 
+  setCurrentNodeId, 
+  setResult, 
+  setVisitedNodeIds 
+}) => {
+  // 更新进度条背景填充
+  useEffect(() => {
+    const progressBar = document.querySelector('.step-progress-bar') as HTMLInputElement;
+    if (progressBar) {
+      const min = parseInt(progressBar.min || '0');
+      const max = parseInt(progressBar.max || '100');
+      const value = parseInt(progressBar.value || '0');
+      const percentage = ((value - min) / (max - min)) * 100;
+      progressBar.style.setProperty('--fill-percent', `${percentage}%`);
+    }
+  }, [currentStep, traversalSteps]);
+
+  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const step = parseInt(e.target.value);
+    setCurrentStep(step);
+    
+    // 更新节点状态和结果
+    if (traversalSteps.length > 0) {
+      const targetStep = traversalSteps[step];
+      setCurrentNodeId(targetStep.currentId);
+      setResult([...targetStep.result]);
+      
+      // 更新已访问节点
+      const visitedNodeIdsUpToCurrentStep = new Set<string>();
+      for (let i = 0; i <= step; i++) {
+        const s = traversalSteps[i];
+        if (s.action === 'visit' && s.currentId !== null && s.visitedIds.includes(s.currentId)) {
+          visitedNodeIdsUpToCurrentStep.add(s.currentId);
+        }
+      }
+      setVisitedNodeIds(Array.from(visitedNodeIdsUpToCurrentStep));
+    }
+  };
+
+  return (
+    <div className="visualization-bottom-controls">
+      <div id="progressBarContainer">
+        <span className="progress-step">{currentStep + 1}</span>
+        <input 
+          type="range"
+          min="0"
+          max={traversalSteps.length > 0 ? traversalSteps.length - 1 : 0}
+          value={currentStep}
+          onChange={handleProgressChange}
+          className="step-progress-bar"
+          style={{
+            '--min': 0,
+            '--max': traversalSteps.length > 0 ? traversalSteps.length - 1 : 0,
+            '--value': currentStep
+          } as React.CSSProperties}
+        />
+        <span className="progress-step">{traversalSteps.length}</span>
+      </div>
+    </div>
+  );
 };
 
 export default function BinaryTreeInorderTraversal() {
@@ -31,7 +114,7 @@ export default function BinaryTreeInorderTraversal() {
   const [animationSpeed, setAnimationSpeed] = useState<number>(() => {
     // 从localStorage获取之前保存的动画速度
     const savedSpeed = localStorage.getItem(STORAGE_KEYS.ANIMATION_SPEED);
-    return savedSpeed ? parseInt(savedSpeed, 10) : 1000;
+    return savedSpeed ? parseInt(savedSpeed, 10) : SPEED_CONFIG.DEFAULT;
   });
   const [traversalSteps, setTraversalSteps] = useState<TraversalStep[]>([]);
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -66,7 +149,7 @@ export default function BinaryTreeInorderTraversal() {
       const playNextStep = () => {
         if (currentStep < traversalSteps.length - 1) {
           goToNextStep();
-          // 继续播放下一步
+          // 继续播放下一步，使用当前动画速度
           autoPlayTimerRef.current = window.setTimeout(playNextStep, animationSpeed);
         } else {
           // 已到最后，停止播放
@@ -74,7 +157,7 @@ export default function BinaryTreeInorderTraversal() {
         }
       };
       
-      // 启动自动播放
+      // 启动自动播放，使用当前动画速度
       autoPlayTimerRef.current = window.setTimeout(playNextStep, animationSpeed);
     }
   };
@@ -391,17 +474,39 @@ export default function BinaryTreeInorderTraversal() {
     const newValue = parseInt(e.target.value);
     setAnimationSpeed(newValue);
     updateRangeBackground(e.target);
+
+    // 如果正在自动播放，需要重启计时器使用新速度
+    if (isAutoPlaying && autoPlayTimerRef.current) {
+      clearTimeout(autoPlayTimerRef.current);
+      autoPlayTimerRef.current = null;
+      
+      const playNextStep = () => {
+        if (currentStep < traversalSteps.length - 1) {
+          goToNextStep();
+          autoPlayTimerRef.current = window.setTimeout(playNextStep, newValue);
+        } else {
+          setIsAutoPlaying(false);
+        }
+      };
+      
+      autoPlayTimerRef.current = window.setTimeout(playNextStep, newValue);
+    }
   };
 
   // 更新滑块背景填充
   const updateRangeBackground = (rangeElement: HTMLInputElement) => {
-    const min = parseInt(rangeElement.min) || 0;
-    const max = parseInt(rangeElement.max) || 10;
+    const min = parseInt(rangeElement.min) || SPEED_CONFIG.MIN;
+    const max = parseInt(rangeElement.max) || SPEED_CONFIG.MAX;
     const value = parseInt(rangeElement.value);
     
-    // 计算填充百分比
-    const fillPercent = ((value - min) / (max - min)) * 100;
+    // 因为速度是反向的（值越小越快），所以填充比例需要反转
+    const fillPercent = 100 - (((value - min) / (max - min)) * 100);
     rangeElement.style.setProperty('--fill-percent', `${fillPercent}%`);
+  };
+
+  // 格式化速度显示
+  const formatSpeedDisplay = (ms: number): string => {
+    return ms < 1000 ? `${ms}毫秒` : `${(ms / 1000).toFixed(1)}秒`;
   };
 
   // 在组件挂载时初始化所有滑块
@@ -429,6 +534,45 @@ export default function BinaryTreeInorderTraversal() {
   const handleMethodChange = (newMethod: 'recursive' | 'iterative') => {
     setMethod(newMethod);
   };
+
+  // 处理键盘快捷键
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // 如果当前有输入框被聚焦，不处理快捷键
+    if (document.activeElement && 
+        (document.activeElement.tagName === 'INPUT' || 
+         document.activeElement.tagName === 'TEXTAREA')) {
+      return;
+    }
+    
+    switch (e.key) {
+      case 'r':
+      case 'R':
+        // 重置
+        resetSteps();
+        break;
+      case 'ArrowLeft':
+        // 上一步
+        goToPreviousStep();
+        break;
+      case 'ArrowRight':
+        // 下一步
+        goToNextStep();
+        break;
+      case ' ':
+        // 空格，切换自动播放
+        e.preventDefault(); // 防止页面滚动
+        toggleAutoPlay();
+        break;
+    }
+  }, [resetSteps, goToPreviousStep, goToNextStep, toggleAutoPlay]);
+
+  // 添加键盘事件监听
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
   return (
     <div className="binary-tree-inorder-traversal">
@@ -506,12 +650,13 @@ export default function BinaryTreeInorderTraversal() {
               className="speed-slider"
               type="range"
               id="speed"
-              min="1"
-              max="10"
+              min={SPEED_CONFIG.MIN}
+              max={SPEED_CONFIG.MAX}
+              step={SPEED_CONFIG.STEP}
               value={animationSpeed}
               onChange={handleSpeedChange}
             />
-            <span className="speed-value">{animationSpeed}x</span>
+            <span className="speed-value">{formatSpeedDisplay(animationSpeed)}</span>
           </div>
         </div>
       </div>
@@ -533,19 +678,31 @@ export default function BinaryTreeInorderTraversal() {
             )}
           </div>
           
-          <div className="stack-section">
-            <StackVisualization 
-              stack={getCurrentStackState().stack}
-              stackVals={getCurrentStackState().stackVals}
-              currentId={getCurrentStackState().currentId}
-              currentVal={getCurrentStackState().currentVal}
-              action={getCurrentStackState().action}
-              description={getCurrentStackState().description}
-              result={result}
-            />
-          </div>
+          {(method === 'iterative' || method === 'recursive') && (
+            <div className="stack-section">
+              <StackVisualization 
+                stack={getCurrentStackState().stack}
+                stackVals={getCurrentStackState().stackVals}
+                currentId={getCurrentStackState().currentId}
+                currentVal={getCurrentStackState().currentVal}
+                action={getCurrentStackState().action}
+                description={getCurrentStackState().description}
+                result={result}
+              />
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* 使用新的底部控制组件 */}
+      <VisualizationBottomControls
+        currentStep={currentStep}
+        setCurrentStep={setCurrentStep}
+        traversalSteps={traversalSteps}
+        setCurrentNodeId={setCurrentNodeId}
+        setResult={setResult}
+        setVisitedNodeIds={setVisitedNodeIds}
+      />
       
       <div className="controls-results-wrapper">
         <div className="manual-controls">
@@ -554,75 +711,37 @@ export default function BinaryTreeInorderTraversal() {
             <span>步骤: {getStepProgress()}</span>
           </div>
           
-          <div className="progress-bar-container">
-            <span className="progress-step">{currentStep + 1}</span>
-            <input 
-              type="range"
-              min="0"
-              max={traversalSteps.length > 0 ? traversalSteps.length - 1 : 0}
-              value={currentStep}
-              onChange={(e) => {
-                const step = parseInt(e.target.value);
-                setCurrentStep(step);
-                
-                // 更新节点状态和结果
-                if (traversalSteps.length > 0) {
-                  const targetStep = traversalSteps[step];
-                  setCurrentNodeId(targetStep.currentId);
-                  setResult([...targetStep.result]);
-                  
-                  // 更新已访问节点
-                  const visitedNodeIdsUpToCurrentStep = new Set<string>();
-                  for (let i = 0; i <= step; i++) {
-                    const s = traversalSteps[i];
-                    if (s.action === 'visit' && s.currentId !== null && s.visitedIds.includes(s.currentId)) {
-                      visitedNodeIdsUpToCurrentStep.add(s.currentId);
-                    }
-                  }
-                  setVisitedNodeIds(Array.from(visitedNodeIdsUpToCurrentStep));
-                }
-              }}
-              className="step-progress-bar"
-              style={{
-                '--min': 0,
-                '--max': traversalSteps.length > 0 ? traversalSteps.length - 1 : 0,
-                '--value': currentStep
-              } as React.CSSProperties}
-            />
-            <span className="progress-step">{traversalSteps.length}</span>
-          </div>
-          
           <div className="step-buttons">
             <button 
               onClick={resetSteps} 
               className="control-button reset-button"
-              title="重置到初始状态"
+              title="重置到初始状态 (快捷键: R)"
             >
-              <span className="button-icon">⏮️</span> 重置
+              <span className="button-icon">⏮️</span> 重置 <span className="shortcut-hint">R</span>
             </button>
             <button 
               onClick={goToPreviousStep} 
               className="control-button prev-button"
-              title="返回上一步"
+              title="返回上一步 (快捷键: ←)"
             >
-              <span className="button-icon">◀️</span> 上一步
+              <span className="button-icon">◀️</span> 上一步 <span className="shortcut-hint">←</span>
             </button>
             
             <button 
               onClick={toggleAutoPlay} 
               className={`control-button ${isAutoPlaying ? "pause-button" : "play-button"}`}
-              title={isAutoPlaying ? "暂停自动播放" : "开始自动播放"}
+              title={isAutoPlaying ? "暂停自动播放 (快捷键: 空格)" : "开始自动播放 (快捷键: 空格)"}
             >
               <span className="button-icon">{isAutoPlaying ? "⏸️" : "▶️▶️"}</span> 
-              {isAutoPlaying ? "暂停" : "自动"}
+              {isAutoPlaying ? "暂停" : "自动"} <span className="shortcut-hint">空格</span>
             </button>
             
             <button 
               onClick={goToNextStep} 
               className="control-button next-button"
-              title="前进到下一步"
+              title="前进到下一步 (快捷键: →)"
             >
-              <span className="button-icon">▶️</span> 下一步
+              <span className="button-icon">▶️</span> 下一步 <span className="shortcut-hint">→</span>
             </button>
             <button 
               onClick={completeAllSteps} 
