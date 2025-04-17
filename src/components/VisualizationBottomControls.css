@@ -1,0 +1,67 @@
+.visualization-bottom-controls {
+  width: 100%;
+  height: 40px; /* 减小高度 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 10px;
+  background-color: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+}
+
+#progressBarContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-step {
+  font-size: 12px;
+  color: #666;
+  min-width: 25px;
+  text-align: center;
+}
+
+.step-progress-bar {
+  flex: 1;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  background: #e0e0e0;
+  outline: none;
+  border-radius: 4px;
+  position: relative;
+}
+
+.step-progress-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #4285f4;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.step-progress-bar::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #4285f4;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: none;
+}
+
+/* 背景填充效果 */
+.step-progress-bar {
+  --fill-percent: 0%;
+  background: linear-gradient(to right, #4285f4 var(--fill-percent), #e0e0e0 0);
+} 
