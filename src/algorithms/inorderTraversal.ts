@@ -21,6 +21,170 @@ export function inorderTraversalRecursive(root: TreeNode | null): number[] {
   return result;
 }
 
+// 带递归步骤追踪的中序遍历
+export function inorderTraversalRecursiveWithSteps(root: TreeNode | null): TraversalStep[] {
+  const steps: TraversalStep[] = [];
+  const result: number[] = [];
+  const visitedIds: string[] = [];
+  const stack: TreeNode[] = [];
+  
+  // 初始化步骤
+  steps.push({
+    stack: [],
+    stackVals: [],
+    currentId: null,
+    currentVal: null,
+    result: [],
+    visitedIds: [],
+    action: 'visit',
+    description: '初始化：展示二叉树结构、空栈和空结果'
+  });
+  
+  if (!root) {
+    steps.push({
+      stack: [],
+      stackVals: [],
+      currentId: null,
+      currentVal: null,
+      result: [],
+      visitedIds: [],
+      action: 'visit',
+      description: '树为空，遍历结束'
+    });
+    return steps;
+  }
+  
+  // 访问根节点
+  steps.push({
+    stack: [],
+    stackVals: [],
+    currentId: root.id,
+    currentVal: root.val,
+    result: [],
+    visitedIds: [],
+    action: 'visit',
+    description: '开始递归遍历，当前节点是根节点'
+  });
+  
+  // 递归函数，跟踪栈和步骤
+  function inorderWithSteps(node: TreeNode | null, depth: number) {
+    if (!node) return;
+    
+    // 当前节点入栈 - 递归调用前
+    stack.push(node);
+    steps.push({
+      stack: stack.map(n => n.id),
+      stackVals: stack.map(n => n.val),
+      currentId: node.id,
+      currentVal: node.val,
+      result: [...result],
+      visitedIds: [...visitedIds],
+      action: 'push',
+      description: `递归深度: ${depth} - 将节点 ${node.val} 入栈，准备遍历左子树`
+    });
+    
+    // 左子树递归 - 如果有左子节点
+    if (node.left) {
+      steps.push({
+        stack: stack.map(n => n.id),
+        stackVals: stack.map(n => n.val),
+        currentId: node.left.id,
+        currentVal: node.left.val,
+        result: [...result],
+        visitedIds: [...visitedIds],
+        action: 'visit',
+        description: `递归深度: ${depth} - 移动到节点 ${node.val} 的左子节点 ${node.left.val}`
+      });
+      inorderWithSteps(node.left, depth + 1);
+    } else {
+      // 如果没有左子节点
+      steps.push({
+        stack: stack.map(n => n.id),
+        stackVals: stack.map(n => n.val),
+        currentId: node.id,
+        currentVal: node.val,
+        result: [...result],
+        visitedIds: [...visitedIds],
+        action: 'visit',
+        description: `递归深度: ${depth} - 节点 ${node.val} 没有左子树，处理当前节点`
+      });
+    }
+    
+    // 访问当前节点 - 左子树遍历完毕后
+    result.push(node.val);
+    visitedIds.push(node.id);
+    steps.push({
+      stack: stack.map(n => n.id),
+      stackVals: stack.map(n => n.val),
+      currentId: node.id,
+      currentVal: node.val,
+      result: [...result],
+      visitedIds: [...visitedIds],
+      action: 'visit',
+      description: `递归深度: ${depth} - 访问节点 ${node.val}，将其加入结果`
+    });
+    
+    // 右子树递归 - 如果有右子节点
+    if (node.right) {
+      steps.push({
+        stack: stack.map(n => n.id),
+        stackVals: stack.map(n => n.val),
+        currentId: node.right.id,
+        currentVal: node.right.val,
+        result: [...result],
+        visitedIds: [...visitedIds],
+        action: 'move_right',
+        description: `递归深度: ${depth} - 移动到节点 ${node.val} 的右子节点 ${node.right.val}`
+      });
+      inorderWithSteps(node.right, depth + 1);
+    } else {
+      // 如果没有右子节点
+      steps.push({
+        stack: stack.map(n => n.id),
+        stackVals: stack.map(n => n.val),
+        currentId: node.id,
+        currentVal: node.val,
+        result: [...result],
+        visitedIds: [...visitedIds],
+        action: 'visit',
+        description: `递归深度: ${depth} - 节点 ${node.val} 没有右子树，递归返回`
+      });
+    }
+    
+    // 当前节点处理完毕，从栈中弹出 - 递归调用后
+    const poppedNode = stack.pop();
+    if (poppedNode) {
+      steps.push({
+        stack: stack.map(n => n.id),
+        stackVals: stack.map(n => n.val),
+        currentId: node.id,
+        currentVal: node.val,
+        result: [...result],
+        visitedIds: [...visitedIds],
+        action: 'pop',
+        description: `递归深度: ${depth} - 节点 ${poppedNode.val} 的处理完成，从栈中弹出`
+      });
+    }
+  }
+  
+  // 开始递归遍历
+  inorderWithSteps(root, 1);
+  
+  // 最终结果
+  steps.push({
+    stack: [],
+    stackVals: [],
+    currentId: null,
+    currentVal: null,
+    result: [...result],
+    visitedIds: [...visitedIds],
+    action: 'visit',
+    description: '遍历完成，最终结果: [' + result.join(', ') + ']'
+  });
+  
+  return steps;
+}
+
 // 迭代实现二叉树的中序遍历
 export function inorderTraversalIterative(root: TreeNode | null): number[] {
   const result: number[] = [];
@@ -57,7 +221,17 @@ export interface TraversalStep {
   visitedIds: string[]; // 已访问节点的ID列表
 }
 
-export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[] {
+// 根据方法选择适当的带步骤追踪的遍历函数
+export function inorderTraversalWithSteps(root: TreeNode | null, method: 'recursive' | 'iterative' = 'iterative'): TraversalStep[] {
+  if (method === 'recursive') {
+    return inorderTraversalRecursiveWithSteps(root);
+  } else {
+    return inorderTraversalIterativeWithSteps(root);
+  }
+}
+
+// 原迭代方式的步骤跟踪函数，重命名为iterative版本
+export function inorderTraversalIterativeWithSteps(root: TreeNode | null): TraversalStep[] {
   const steps: TraversalStep[] = [];
   const result: number[] = [];
   const stack: TreeNode[] = [];
@@ -252,20 +426,12 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
         }
       }
     } else {
-      // 防止无限循环，如果当前阶段为right但current为null
-      if (processingPhase === 'right' && current === null) {
-        // 如果栈还有节点，返回到节点处理阶段
-        if (stack.length > 0) {
-          processingPhase = 'node';
-        } else {
-          // 栈为空，遍历完成
-          break;
-        }
-      }
+      // 其他情况，结束循环
+      break;
     }
   }
   
-  // 最终步骤：遍历完成
+  // 添加最终结果
   steps.push({
     stack: [],
     stackVals: [],
@@ -274,7 +440,7 @@ export function inorderTraversalWithSteps(root: TreeNode | null): TraversalStep[
     result: [...result],
     visitedIds: [...visitedIds],
     action: 'visit',
-    description: `遍历完成，结果为 [${result.join(', ')}]`
+    description: '遍历完成，最终结果: [' + result.join(', ') + ']'
   });
   
   return steps;

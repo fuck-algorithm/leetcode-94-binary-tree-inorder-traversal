@@ -1,0 +1,68 @@
+.tree-visualization-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  box-sizing: border-box;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.tree-visualization-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  display: block;
+}
+
+.node circle {
+  fill: #95a5a6;
+  stroke: #7f8c8d;
+  stroke-width: 2px;
+  transition: all 0.3s ease;
+}
+
+.node text {
+  font-size: 14px;
+  fill: #2c3e50;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.link {
+  fill: none;
+  stroke: #bdc3c7;
+  stroke-width: 2px;
+  transition: stroke 0.3s ease;
+}
+
+.node-label {
+  font-size: 12px;
+  fill: #34495e;
+  text-anchor: middle;
+}
+
+.edge-label {
+  font-size: 10px;
+  fill: #7f8c8d;
+  text-anchor: middle;
+}
+
+/* 高亮样式 */
+.node.visited circle {
+  fill: #3498db;
+  stroke: #2980b9;
+}
+
+.node.current circle {
+  fill: #e74c3c;
+  stroke: #c0392b;
+  stroke-width: 3px;
+}
+
+.node.stack circle {
+  fill: #f39c12;
+  stroke: #d35400;
+} 

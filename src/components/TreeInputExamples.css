@@ -1,0 +1,174 @@
+.tree-input-panel {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 8px 15px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #3498db;
+}
+
+.tree-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.tree-input-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 200px;
+}
+
+.tree-input-wrapper label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.85rem;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.tree-input-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  width: 100%;
+}
+
+.tree-input-container input {
+  flex: 1;
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s;
+  min-width: 120px;
+}
+
+.tree-input-container input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.build-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.build-button:hover {
+  background-color: #2980b9;
+  transform: translateY(-1px);
+}
+
+.build-button:active {
+  transform: translateY(1px);
+}
+
+.tree-examples {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.example-button {
+  background-color: #e9f7fe;
+  color: #3498db;
+  border: 1px solid #3498db;
+  padding: 4px 8px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.example-button:hover {
+  background-color: #d0ebfc;
+  transform: translateY(-1px);
+}
+
+.random-button {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.random-button:hover {
+  background-color: #219653;
+  transform: translateY(-1px);
+}
+
+.random-icon {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 1024px) {
+  .tree-input-row {
+    flex-wrap: wrap;
+  }
+  
+  .tree-examples {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-top: 10px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .tree-input-wrapper {
+    width: 100%;
+  }
+  
+  .example-button, .random-button {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tree-input-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .tree-input-wrapper {
+    width: 100%;
+  }
+  
+  .tree-examples {
+    margin-top: 12px;
+    width: 100%;
+    justify-content: space-between;
+  }
+} 

@@ -1,106 +1,135 @@
 import { useState, useEffect, useRef } from 'react';
 import TreeVisualization from './TreeVisualization';
 import StackVisualization from './StackVisualization';
+import TreeInputExamples from './TreeInputExamples';
 import { TreeNode, TreeNodeData, arrayToTree, treeToD3Format } from '../types/TreeNode';
 import { inorderTraversalRecursive, inorderTraversalIterative, inorderTraversalWithSteps, TraversalStep } from '../algorithms/inorderTraversal';
 import './BinaryTreeInorderTraversal.css';
+
+// 保存到localStorage的键名
+const STORAGE_KEYS = {
+  ANIMATION_SPEED: 'btit_animation_speed',
+  TRAVERSAL_METHOD: 'btit_traversal_method'
+};
 
 export default function BinaryTreeInorderTraversal() {
   const [treeInput, setTreeInput] = useState<string>('[1,null,2,3]');
   const [treeData, setTreeData] = useState<TreeNodeData | null>(null);
   const [result, setResult] = useState<number[]>([]);
   const [root, setRoot] = useState<TreeNode | null>(null);
-  const [method, setMethod] = useState<'recursive' | 'iterative'>('iterative');
+  const [method, setMethod] = useState<'recursive' | 'iterative'>(() => {
+    // 从localStorage获取之前保存的算法方法
+    const savedMethod = localStorage.getItem(STORAGE_KEYS.TRAVERSAL_METHOD);
+    return (savedMethod === 'recursive' || savedMethod === 'iterative') 
+      ? savedMethod 
+      : 'iterative';
+  });
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
   const [visitedNodeIds, setVisitedNodeIds] = useState<string[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [animationSpeed, setAnimationSpeed] = useState<number>(1000);
+  const [animationSpeed, setAnimationSpeed] = useState<number>(() => {
+    // 从localStorage获取之前保存的动画速度
+    const savedSpeed = localStorage.getItem(STORAGE_KEYS.ANIMATION_SPEED);
+    return savedSpeed ? parseInt(savedSpeed, 10) : 1000;
+  });
   const [traversalSteps, setTraversalSteps] = useState<TraversalStep[]>([]);
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [showStack, setShowStack] = useState<boolean>(true);
   const [manualMode, setManualMode] = useState<boolean>(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(false);
   const autoPlayTimerRef = useRef<number | null>(null);
+  const showStack = true; // 始终显示栈面板
+
+  // 保存动画速度到localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.ANIMATION_SPEED, animationSpeed.toString());
+  }, [animationSpeed]);
+
+  // 保存算法方法到localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.TRAVERSAL_METHOD, method);
+  }, [method]);
 
   // 自动播放功能
   const toggleAutoPlay = () => {
     if (isAutoPlaying) {
       // 暂停自动播放
       if (autoPlayTimerRef.current) {
-        clearInterval(autoPlayTimerRef.current);
+        clearTimeout(autoPlayTimerRef.current);
         autoPlayTimerRef.current = null;
       }
       setIsAutoPlaying(false);
     } else {
       // 开始自动播放
       setIsAutoPlaying(true);
-      autoPlayTimerRef.current = setInterval(() => {
-        // 如果到达最后一步，停止自动播放
-        if (currentStep >= traversalSteps.length - 1) {
-          // 停止自动播放
-          if (autoPlayTimerRef.current) {
-            clearInterval(autoPlayTimerRef.current);
-            autoPlayTimerRef.current = null;
-          }
-          setIsAutoPlaying(false);
-        } else {
+      
+      const playNextStep = () => {
+        if (currentStep < traversalSteps.length - 1) {
           goToNextStep();
+          // 继续播放下一步
+          autoPlayTimerRef.current = window.setTimeout(playNextStep, animationSpeed);
+        } else {
+          // 已到最后，停止播放
+          setIsAutoPlaying(false);
         }
-      }, animationSpeed);
+      };
+      
+      // 启动自动播放
+      autoPlayTimerRef.current = window.setTimeout(playNextStep, animationSpeed);
     }
   };
   
-  // 当动画速度改变时，如果正在自动播放，更新计时器
+  // 当动画速度或当前步骤变化时，如果正在自动播放，需要更新计时器
   useEffect(() => {
-    if (isAutoPlaying && autoPlayTimerRef.current) {
-      clearInterval(autoPlayTimerRef.current);
-      autoPlayTimerRef.current = setInterval(() => {
-        // 如果到达最后一步，停止自动播放
-        if (currentStep >= traversalSteps.length - 1) {
-          // 停止自动播放
-          if (autoPlayTimerRef.current) {
-            clearInterval(autoPlayTimerRef.current);
-            autoPlayTimerRef.current = null;
-          }
-          setIsAutoPlaying(false);
-        } else {
+    // 如果正在自动播放，但计时器被清除，需要重新启动
+    if (isAutoPlaying && !autoPlayTimerRef.current) {
+      const playNextStep = () => {
+        if (currentStep < traversalSteps.length - 1) {
           goToNextStep();
+          // 继续播放下一步
+          autoPlayTimerRef.current = window.setTimeout(playNextStep, animationSpeed);
+        } else {
+          // 已到最后，停止播放
+          setIsAutoPlaying(false);
         }
-      }, animationSpeed);
+      };
+      
+      // 启动自动播放
+      autoPlayTimerRef.current = window.setTimeout(playNextStep, animationSpeed);
     }
-  }, [animationSpeed]);
-  
-  // 清理自动播放计时器
-  useEffect(() => {
+    
+    // 组件卸载时清理计时器
     return () => {
       if (autoPlayTimerRef.current) {
-        clearInterval(autoPlayTimerRef.current);
+        clearTimeout(autoPlayTimerRef.current);
+        autoPlayTimerRef.current = null;
       }
     };
-  }, []);
+  }, [isAutoPlaying, currentStep, traversalSteps.length, animationSpeed]);
   
-  // 当遍历步骤改变时，如果正在自动播放，重置计时器
+  // 当遍历步骤改变时，如果正在自动播放，需要重置计时器
   useEffect(() => {
     if (isAutoPlaying) {
+      // 清理旧计时器
       if (autoPlayTimerRef.current) {
-        clearInterval(autoPlayTimerRef.current);
+        clearTimeout(autoPlayTimerRef.current);
+        autoPlayTimerRef.current = null;
       }
-      // 不再重置为0，保持当前步骤位置
-      autoPlayTimerRef.current = setInterval(() => {
-        setCurrentStep(prev => {
-          if (prev >= traversalSteps.length - 1) {
-            // 停止自动播放
-            if (autoPlayTimerRef.current) {
-              clearInterval(autoPlayTimerRef.current);
-              autoPlayTimerRef.current = null;
-            }
-            setIsAutoPlaying(false);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, animationSpeed);
+      
+      // 设置新计时器
+      const playNextStep = () => {
+        if (currentStep < traversalSteps.length - 1) {
+          goToNextStep();
+          // 继续播放下一步
+          autoPlayTimerRef.current = window.setTimeout(playNextStep, animationSpeed);
+        } else {
+          // 已到最后，停止播放
+          setIsAutoPlaying(false);
+        }
+      };
+      
+      // 启动自动播放
+      autoPlayTimerRef.current = window.setTimeout(playNextStep, animationSpeed);
     }
   }, [traversalSteps]);
 
@@ -150,24 +179,17 @@ export default function BinaryTreeInorderTraversal() {
       
       // 初始化状态
       if (newRoot) {
-        // 对于递归方法，直接显示结果
-        if (method === 'recursive') {
-          const traversalResult = inorderTraversalRecursive(newRoot);
-          setResult(traversalResult);
-        } 
-        // 对于迭代方法，设置步骤
-        else {
-          const steps = inorderTraversalWithSteps(newRoot);
-          setTraversalSteps(steps);
-          setCurrentStep(0); // 重置步骤
-          
-          // 设置初始状态
-          if (steps.length > 0) {
-            const firstStep = steps[0];
-            setCurrentNodeId(firstStep.currentId);
-            setResult([]);
-            setVisitedNodeIds([]);
-          }
+        // 使用带步骤的遍历函数处理递归和迭代方法
+        const steps = inorderTraversalWithSteps(newRoot, method);
+        setTraversalSteps(steps);
+        setCurrentStep(0); // 重置步骤
+        
+        // 设置初始状态
+        if (steps.length > 0) {
+          const firstStep = steps[0];
+          setCurrentNodeId(firstStep.currentId);
+          setResult([]);
+          setVisitedNodeIds([]);
         }
       } else {
         // 如果树为空，也需要重置其他状态
@@ -189,14 +211,14 @@ export default function BinaryTreeInorderTraversal() {
   const goToNextStep = () => {
     if (currentStep < traversalSteps.length - 1) {
       const nextStep = currentStep + 1;
-      setCurrentStep(nextStep);
       
       // 更新当前节点和结果
       const step = traversalSteps[nextStep];
+      
+      // 批量更新状态以避免多次渲染
+      setCurrentStep(nextStep);
       setCurrentNodeId(step.currentId);
       setResult([...step.result]);
-      
-      // 使用步骤中记录的已访问节点列表
       setVisitedNodeIds([...step.visitedIds]);
     }
     // 如果已经在最后一步，可以循环回到第一步
@@ -310,23 +332,6 @@ export default function BinaryTreeInorderTraversal() {
     setTreeInput(`[${treeArray.map(val => val === null ? 'null' : val).join(',')}]`);
   };
 
-  // 示例数据
-  const useExample = (exampleNum: number) => {
-    switch (exampleNum) {
-      case 1:
-        setTreeInput('[1,null,2,3]');
-        break;
-      case 2:
-        setTreeInput('[]');
-        break;
-      case 3:
-        setTreeInput('[1]');
-        break;
-      default:
-        break;
-    }
-  };
-
   // 修改方法变更的useEffect
   useEffect(() => {
     if (root) {
@@ -334,25 +339,19 @@ export default function BinaryTreeInorderTraversal() {
       setVisitedNodeIds([]);
       setCurrentNodeId(null);
       
-      // 只有迭代方法支持手动模式
-      if (method === 'iterative') {
-        const steps = inorderTraversalWithSteps(root);
-        setTraversalSteps(steps);
-        setCurrentStep(0);
-        
-        // 设置初始状态
-        if (steps.length > 0) {
-          const firstStep = steps[0];
-          setCurrentNodeId(firstStep.currentId);
-          setResult([]);
-        }
-      } else {
-        // 如果是递归方法，就显示完整结果
-        const traversalResult = inorderTraversalRecursive(root);
-        setResult(traversalResult);
+      // 递归和迭代方法都支持手动模式
+      const steps = inorderTraversalWithSteps(root, method);
+      setTraversalSteps(steps);
+      setCurrentStep(0);
+      
+      // 设置初始状态
+      if (steps.length > 0) {
+        const firstStep = steps[0];
+        setCurrentNodeId(firstStep.currentId);
+        setResult([]);
       }
     }
-  }, [method]);
+  }, [method, root]);
 
   // 修改初始化组件的useEffect
   useEffect(() => {
@@ -364,7 +363,7 @@ export default function BinaryTreeInorderTraversal() {
   useEffect(() => {
     buildTree();
   }, [treeInput]);
-
+  
   // 获取当前步骤的栈状态
   const getCurrentStackState = () => {
     if (traversalSteps.length === 0 || currentStep >= traversalSteps.length) {
@@ -387,9 +386,84 @@ export default function BinaryTreeInorderTraversal() {
     return `${currentStep + 1} / ${traversalSteps.length}`;
   };
 
+  // 更新速度控制函数
+  const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = parseInt(e.target.value);
+    setAnimationSpeed(newValue);
+    updateRangeBackground(e.target);
+  };
+
+  // 更新滑块背景填充
+  const updateRangeBackground = (rangeElement: HTMLInputElement) => {
+    const min = parseInt(rangeElement.min) || 0;
+    const max = parseInt(rangeElement.max) || 10;
+    const value = parseInt(rangeElement.value);
+    
+    // 计算填充百分比
+    const fillPercent = ((value - min) / (max - min)) * 100;
+    rangeElement.style.setProperty('--fill-percent', `${fillPercent}%`);
+  };
+
+  // 在组件挂载时初始化所有滑块
+  useEffect(() => {
+    // 初始化拖动条背景
+    const speedSlider = document.querySelector('.speed-slider') as HTMLInputElement;
+    if (speedSlider) {
+      updateRangeBackground(speedSlider);
+      
+      // 添加实时更新事件
+      speedSlider.addEventListener('input', (e) => {
+        updateRangeBackground(e.target as HTMLInputElement);
+      });
+      
+      // 清理事件监听器
+      return () => {
+        speedSlider.removeEventListener('input', (e) => {
+          updateRangeBackground(e.target as HTMLInputElement);
+        });
+      };
+    }
+  }, []);
+
+  // 处理算法方法变更
+  const handleMethodChange = (newMethod: 'recursive' | 'iterative') => {
+    setMethod(newMethod);
+  };
+
   return (
     <div className="binary-tree-inorder-traversal">
-      <h1>二叉树的中序遍历</h1>
+      <a
+        href="https://github.com/fuck-algorithm/leetcode-94-binary-tree-inorder-traversal"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="github-corner"
+        aria-label="在GitHub上查看源码"
+      >
+        <svg width="80" height="80" viewBox="0 0 250 250" style={{
+          fill: '#151513',
+          color: '#fff',
+          position: 'absolute',
+          top: 0,
+          border: 0,
+          right: 0,
+          zIndex: 999
+        }} aria-hidden="true">
+          <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+          <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style={{ transformOrigin: '130px 106px' }} className="octo-arm"></path>
+          <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" className="octo-body"></path>
+        </svg>
+      </a>
+      <div className="title-container">
+        <a 
+          href="https://fuck-algorithm.github.io/leetcode-hot-100/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="back-link"
+        >
+          ← 返回LeetCode Hot 100
+        </a>
+        <h1>二叉树的中序遍历</h1>
+      </div>
       
       <div className="problem-description">
         <p>给定一个二叉树的根节点 root ，返回它的 中序 遍历结果。</p>
@@ -397,35 +471,21 @@ export default function BinaryTreeInorderTraversal() {
       </div>
       
       <div className="input-section">
-        <div className="input-row">
-          <div className="input-controls">
-            <label htmlFor="tree-input">树：</label>
-            <input 
-              id="tree-input" 
-              type="text" 
-              value={treeInput} 
-              onChange={(e) => setTreeInput(e.target.value)}
-            />
-            <button onClick={buildTree}>构建</button>
-          </div>
-          
-          <div className="examples">
-            <button onClick={() => useExample(1)}>示例1</button>
-            <button onClick={() => useExample(2)}>示例2</button>
-            <button onClick={() => useExample(3)}>示例3</button>
-            <button onClick={generateRandomTree} className="random-button">随机</button>
-          </div>
-        </div>
+        <TreeInputExamples
+          treeInput={treeInput}
+          onTreeInputChange={setTreeInput}
+          onBuildTree={buildTree}
+          onGenerateRandomTree={generateRandomTree}
+        />
         
-        <div className="control-row">
+        <div className="algorithm-section">
           <div className="method-selection">
-            <label>算法：</label>
             <label>
               <input 
                 type="radio" 
                 value="recursive" 
                 checked={method === 'recursive'} 
-                onChange={() => setMethod('recursive')}
+                onChange={() => handleMethodChange('recursive')}
               />
               递归
             </label>
@@ -434,60 +494,46 @@ export default function BinaryTreeInorderTraversal() {
                 type="radio" 
                 value="iterative" 
                 checked={method === 'iterative'} 
-                onChange={() => setMethod('iterative')}
+                onChange={() => handleMethodChange('iterative')}
               />
               迭代
             </label>
-            
-            {method === 'iterative' && (
-              <label className="stack-toggle">
-                <input 
-                  type="checkbox" 
-                  checked={showStack} 
-                  onChange={() => setShowStack(!showStack)}
-                />
-                显示栈
-              </label>
-            )}
           </div>
           
-          <div className="animation-controls">
-            <label>
-              速度：
-              <input 
-                type="range" 
-                min="200" 
-                max="2000" 
-                step="100"
-                value={animationSpeed}
-                onChange={(e) => setAnimationSpeed(parseInt(e.target.value))}
-              />
-              {animationSpeed}ms
-            </label>
+          <div className="speed-control">
+            <label htmlFor="speed">速度:</label>
+            <input
+              className="speed-slider"
+              type="range"
+              id="speed"
+              min="1"
+              max="10"
+              value={animationSpeed}
+              onChange={handleSpeedChange}
+            />
+            <span className="speed-value">{animationSpeed}x</span>
           </div>
         </div>
       </div>
       
       {error && <div className="error-message">{error}</div>}
       
-      <div className={`visualization-wrapper ${method === 'iterative' && showStack ? 'with-stack' : ''}`}>
+      <div className={`visualization-wrapper ${method === 'iterative' || method === 'recursive' ? 'with-stack' : ''}`}>
         <div className="visualization-container">
-          {treeData && (
-            <TreeVisualization 
-              data={treeData} 
-              width={window.innerWidth > 768 ? 
-                Math.min(window.innerWidth * 0.8, 1000) : 
-                window.innerWidth - 20} 
-              height={window.innerHeight * 0.6}
-              highlightedNodeId={currentNodeId}
-              visitedNodeIds={visitedNodeIds}
-              stackNodeIds={getCurrentStackState().stack}
-            />
-          )}
-        </div>
-        
-        {method === 'iterative' && showStack && (
-          <div className="stack-container-wrapper">
+          <div className="tree-section">
+            {treeData && (
+              <div className="tree-section-content">
+                <TreeVisualization 
+                  data={treeData} 
+                  highlightedNodeId={currentNodeId}
+                  visitedNodeIds={visitedNodeIds}
+                  stackNodeIds={getCurrentStackState().stack}
+                />
+              </div>
+            )}
+          </div>
+          
+          <div className="stack-section">
             <StackVisualization 
               stack={getCurrentStackState().stack}
               stackVals={getCurrentStackState().stackVals}
@@ -498,7 +544,7 @@ export default function BinaryTreeInorderTraversal() {
               result={result}
             />
           </div>
-        )}
+        </div>
       </div>
       
       <div className="controls-results-wrapper">
@@ -588,12 +634,6 @@ export default function BinaryTreeInorderTraversal() {
           </div>
         </div>
       </div>
-
-      {method === 'recursive' && (
-        <div className="warning-message">
-          注意：递归方式下无法逐步查看执行过程
-        </div>
-      )}
     </div>
   );
 } 

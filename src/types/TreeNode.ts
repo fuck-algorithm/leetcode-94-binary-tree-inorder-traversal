@@ -19,6 +19,8 @@ export interface TreeNodeData {
   val: number;
   children?: TreeNodeData[];
   highlighted?: boolean;
+  isLeftChild?: boolean;
+  isRightChild?: boolean;
 }
 
 // 将LeetCode的数组表示转换为TreeNode
