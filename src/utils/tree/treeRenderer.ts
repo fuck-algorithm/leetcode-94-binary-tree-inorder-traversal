@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { TreeNodeData } from '../../types/TreeNode';
-import { TreeDimensions, TreeRenderOptions } from './treeTypes';
+import { TreeDimensions, TreeRenderOptions, LegendItem } from './treeTypes';
 import { countNodes } from './treeAnalysis';
 import { calculateNodeSize } from './treeLayout';
 import { optimizeTreeLayout } from './treeOptimization';
@@ -24,21 +24,24 @@ export const renderTree = (
   const totalNodes = countNodes(data);
   const nodeSize = calculateNodeSize(data, dimensions);
   
-  // 计算有效宽度，考虑栈面板，但减少边距
-  const stackPanelWidth = 280; // 始终考虑栈面板的宽度
-  const effectiveWidth = (dimensions.effectiveWidth || dimensions.width) - stackPanelWidth;
+  // 计算有效宽度，考虑栈面板，更大化利用空间
+  const stackPanelWidth = hasStackPanel ? 220 : 0; // 根据是否有栈面板调整宽度
+  const effectiveWidth = (dimensions.effectiveWidth || dimensions.width) - (hasStackPanel ? stackPanelWidth : 0);
   const effectiveHeight = dimensions.effectiveHeight || dimensions.height;
   
-  // 计算树的布局尺寸，增加利用率
-  const treeWidth = effectiveWidth - nodeSize;
-  const treeHeight = effectiveHeight * 0.95 - nodeSize; // 增加垂直利用率
+  // 计算树的布局尺寸，提高利用率
+  const treeWidth = effectiveWidth * 0.98; // 利用更多水平空间
+  const treeHeight = effectiveHeight * 0.98; // 利用更多垂直空间
   
-  // 创建树形布局
+  // 创建树形布局，动态调整节点间距
   const treeLayout = d3.tree<TreeNodeData>()
     .size([treeWidth, treeHeight])
     .nodeSize([
-      nodeSize * (totalNodes > 15 ? 7 : 10), // 减少水平间距
-      nodeSize * (totalNodes > 15 ? 3.5 : 4.5)  // 减少垂直间距
+      // 水平间距 - 为不同大小的树提供适合的间距
+      // 更大的间距有助于避免节点遮挡
+      nodeSize * (totalNodes > 15 ? 4.5 : totalNodes > 7 ? 6.0 : 7.5), 
+      // 垂直间距 - 稍微增加，提高层级区分度
+      nodeSize * (totalNodes > 15 ? 2.8 : totalNodes > 7 ? 3.2 : 3.8)
     ]);
   
   // 转换数据为d3层次结构并应用布局
@@ -68,7 +71,7 @@ export const renderTree = (
   // 优化树布局
   optimizeTreeLayout(treeData, nodeSize, totalNodes);
   
-  // 计算缩放比例
+  // 计算缩放比例，提高利用率
   const { scale: finalScale, translateX, translateY } = calculateTreeScale(
     treeData, dimensions, nodeSize, hasStackPanel
   );
@@ -77,15 +80,15 @@ export const renderTree = (
   const g = svg.append('g')
     .attr('transform', `translate(${translateX}, ${translateY}) scale(${finalScale})`);
   
-  // 绘制连接线
+  // 绘制连接线，使用适合于缩放的线宽
   g.selectAll('.link')
     .data(links)
     .enter()
     .append('path')
     .attr('class', 'link')
     .attr('fill', 'none')
-    .attr('stroke', '#666') // 统一使用相同的线段颜色
-    .attr('stroke-width', Math.max(1, 2 / finalScale)) // 增加线宽使其更明显
+    .attr('stroke', '#666') 
+    .attr('stroke-width', Math.max(1, 1.5 / finalScale)) // 根据缩放调整线宽
     .attr('d', d3.linkVertical<d3.HierarchyPointLink<TreeNodeData>, d3.HierarchyPointNode<TreeNodeData>>()
       .x((d) => d.x)
       .y((d) => d.y)
@@ -119,11 +122,9 @@ export const renderTree = (
     .attr('transform', d => `translate(${d.x}, ${d.y})`);
   
   // 使用不同的节点尺寸
-  const circleRadius = totalNodes === 1 
-    ? nodeSize * 0.8       // 单节点树使用较小的半径
-    : (totalNodes <= 5 
-        ? nodeSize * 0.9   // 小型树
-        : nodeSize);       // 中大型树
+  const circleRadius = nodeSize * (totalNodes <= 3 ? 0.8 : 
+                                   totalNodes <= 10 ? 0.75 : 
+                                   totalNodes <= 20 ? 0.7 : 0.65);
   
   // 绘制节点圆形
   nodeGroups.append('circle')
@@ -152,64 +153,73 @@ export const renderTree = (
     })
     .attr('stroke-width', d => 
       highlightedNodeId === d.data.nodeId ? 
-        Math.max(2, 3 / finalScale) : // 当前节点的边框更粗
-        Math.max(1, 1.5 / finalScale)
+        Math.max(2, 2.5 / finalScale) : // 当前节点的边框更粗
+        Math.max(1, 1.5 / finalScale)   // 根据缩放调整边框宽度
     );
   
-  // 绘制节点文本标签
+  // 绘制节点文本标签，根据节点数量调整大小
+  const fontSize = Math.max(10, Math.min(14, 14 / finalScale)) * 
+                   (totalNodes > 15 ? 0.85 : 1);
+  
   nodeGroups.append('text')
     .attr('dy', '0.35em')
     .attr('text-anchor', 'middle')
-    .attr('font-size', Math.max(12, Math.min(14, 14 / finalScale)))
+    .attr('font-size', fontSize)
     .text(d => d.data.val !== null ? d.data.val : 'null')
     .attr('fill', '#fff');
   
-  // 为边添加标签 (左/右)
-  g.selectAll('.edge-label')
-    .data(links)
-    .enter()
-    .append('text')
-    .attr('class', 'edge-label')
-    .attr('x', d => (d.source.x + d.target.x) / 2)
-    .attr('y', d => (d.source.y + d.target.y) / 2 - 5)
-    .attr('text-anchor', 'middle')
-    .attr('font-size', Math.max(10, 10 / finalScale))
-    .text(d => {
-      // 显示左/右标签
-      if ((d.target as any).isLeftChild) {
-        return '左';
-      } else if ((d.target as any).isRightChild) {
-        return '右';
-      }
-      return '';
-    })
-    .attr('fill', d => {
-      // 左子树标签使用绿色，右子树标签使用红色
-      if ((d.target as any).isLeftChild) {
-        return '#27ae60';
-      } else if ((d.target as any).isRightChild) {
-        return '#e74c3c';
-      }
-      return '#7f8c8d';
-    });
+  // 为边添加标签 (左/右)，大树时隐藏以减少视觉混乱
+  if (totalNodes <= 25) {
+    g.selectAll('.edge-label')
+      .data(links)
+      .enter()
+      .append('text')
+      .attr('class', 'edge-label')
+      .attr('x', d => (d.source.x + d.target.x) / 2)
+      .attr('y', d => (d.source.y + d.target.y) / 2 - 5)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', Math.max(8, 8 / finalScale) * (totalNodes > 15 ? 0.8 : 1))
+      .text(d => {
+        // 显示左/右标签
+        if ((d.target as any).isLeftChild) {
+          return '左';
+        } else if ((d.target as any).isRightChild) {
+          return '右';
+        }
+        return '';
+      })
+      .attr('fill', d => {
+        // 左子树标签使用绿色，右子树标签使用红色
+        if ((d.target as any).isLeftChild) {
+          return '#27ae60';
+        } else if ((d.target as any).isRightChild) {
+          return '#e74c3c';
+        }
+        return '#7f8c8d';
+      });
+  }
   
   // 添加图例 - 移到右上角
-  const legendFontSize = Math.max(9, Math.min(12, effectiveWidth / 60));
-  const legendSize = Math.max(10, Math.min(12, effectiveWidth / 50));
+  const legendFontSize = Math.max(8, Math.min(10, effectiveWidth / 80));
+  const legendSize = Math.max(8, Math.min(10, effectiveWidth / 70));
   const legendSpacing = legendSize * 1.5;
   
   const legend = svg.append('g')
     .attr('class', 'legend')
-    .attr('transform', `translate(${effectiveWidth - legendSize * 10}, 5)`);
+    .attr('transform', `translate(${effectiveWidth - legendSize * 9}, 2)`);
   
   // 图例项
-  const legendItems = [
+  const legendItems: LegendItem[] = [
     { color: '#95a5a6', text: '未访问' },
     { color: '#e74c3c', text: '正在访问' },
     { color: '#3498db', text: '已访问' },
     { color: '#f39c12', text: '在栈中' },
-    { color: '#666', textLeft: '左', textRight: '右', text: '左/右子树' }
   ];
+  
+  // 当节点数量较少时才显示左右子树图例
+  if (totalNodes <= 25) {
+    legendItems.push({ color: '#666', textLeft: '左', textRight: '右', text: '左/右子树' });
+  }
   
   // 绘制图例
   legendItems.forEach((item, i) => {
@@ -247,15 +257,15 @@ export const renderTree = (
         .attr('width', legendSize)
         .attr('height', legendSize)
         .attr('fill', item.color)
-        .attr('rx', 3)
-        .attr('stroke', '#333')
-        .attr('stroke-width', 1);
+        .attr('rx', 2)
+        .attr('ry', 2);
+        
+      legendItem.append('text')
+        .attr('x', legendSize + 5)
+        .attr('y', legendSize / 2)
+        .attr('dominant-baseline', 'central')
+        .attr('font-size', `${legendFontSize}px`)
+        .text(item.text);
     }
-    
-    legendItem.append('text')
-      .attr('x', legendSize + 5)
-      .attr('y', legendSize * 0.8)
-      .attr('font-size', `${legendFontSize}px`)
-      .text(item.text);
   });
 }; 
