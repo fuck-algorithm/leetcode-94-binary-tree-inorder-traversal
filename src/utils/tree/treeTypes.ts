@@ -1,4 +1,4 @@
-import { TreeNodeData } from '../../types/TreeNode';
+import type { TreeNodeData } from '../../types/TreeNode';
 
 export interface TreeDimensions {
   width: number;
