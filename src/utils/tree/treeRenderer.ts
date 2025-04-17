@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import { TreeNodeData } from '../../types/TreeNode';
 import { TreeDimensions, TreeRenderOptions, LegendItem } from './treeTypes';
 import { countNodes } from './treeAnalysis';
-import { calculateNodeSize } from './treeLayout';
+import { calculateNodeSize, shiftSubtree } from './treeLayout';
 import { optimizeTreeLayout } from './treeOptimization';
 import { calculateTreeScale } from './treeScaling';
 
@@ -39,9 +39,9 @@ export const renderTree = (
     .nodeSize([
       // 水平间距 - 为不同大小的树提供适合的间距
       // 更大的间距有助于避免节点遮挡
-      nodeSize * (totalNodes > 15 ? 4.5 : totalNodes > 7 ? 6.0 : 7.5), 
+      nodeSize * (totalNodes > 15 ? 5.5 : totalNodes > 7 ? 7.0 : 8.5), 
       // 垂直间距 - 稍微增加，提高层级区分度
-      nodeSize * (totalNodes > 15 ? 2.8 : totalNodes > 7 ? 3.2 : 3.8)
+      nodeSize * (totalNodes > 15 ? 3.0 : totalNodes > 7 ? 3.5 : 4.0)
     ]);
   
   // 转换数据为d3层次结构并应用布局
@@ -70,6 +70,40 @@ export const renderTree = (
   
   // 优化树布局
   optimizeTreeLayout(treeData, nodeSize, totalNodes);
+  
+  // 特别处理左子节点与线的潜在重叠
+  const adjustLeftRightBalance = (node: d3.HierarchyPointNode<TreeNodeData>) => {
+    if (!node.children || node.children.length === 0) return;
+    
+    // 检测是否有左子节点
+    const hasLeftChild = node.children.some(child => (child as any).isLeftChild);
+    // 检测是否有右子节点
+    const hasRightChild = node.children.some(child => (child as any).isRightChild);
+    
+    // 如果只有左子节点，增加向左的额外偏移
+    if (hasLeftChild && !hasRightChild) {
+      const leftChild = node.children.find(child => (child as any).isLeftChild);
+      if (leftChild) {
+        const extraLeftOffset = nodeSize * 1.8;
+        shiftSubtree(leftChild, -extraLeftOffset);
+      }
+    }
+    
+    // 如果只有右子节点，增加向右的额外偏移
+    if (!hasLeftChild && hasRightChild) {
+      const rightChild = node.children.find(child => (child as any).isRightChild);
+      if (rightChild) {
+        const extraRightOffset = nodeSize * 1.2;
+        shiftSubtree(rightChild, extraRightOffset);
+      }
+    }
+    
+    // 递归处理所有子节点
+    node.children.forEach(adjustLeftRightBalance);
+  };
+  
+  // 应用左右平衡调整
+  adjustLeftRightBalance(treeData);
   
   // 计算缩放比例，提高利用率
   const { scale: finalScale, translateX, translateY } = calculateTreeScale(
