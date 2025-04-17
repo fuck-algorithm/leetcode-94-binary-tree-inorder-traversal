@@ -27,6 +27,7 @@ export function inorderTraversalRecursiveWithSteps(root: TreeNode | null): Trave
   const result: number[] = [];
   const visitedIds: string[] = [];
   const stack: TreeNode[] = [];
+  const stackNodeIds: string[] = []; // 单独跟踪栈中节点的ID，便于正确显示
   
   // 初始化步骤
   steps.push({
@@ -72,8 +73,10 @@ export function inorderTraversalRecursiveWithSteps(root: TreeNode | null): Trave
     
     // 当前节点入栈 - 递归调用前
     stack.push(node);
+    stackNodeIds.push(node.id);
+    
     steps.push({
-      stack: stack.map(n => n.id),
+      stack: [...stackNodeIds],
       stackVals: stack.map(n => n.val),
       currentId: node.id,
       currentVal: node.val,
@@ -85,9 +88,12 @@ export function inorderTraversalRecursiveWithSteps(root: TreeNode | null): Trave
     
     // 左子树递归 - 如果有左子节点
     if (node.left) {
+      // 在移动到左子节点前将其加入栈跟踪，但不实际入栈
+      const leftNodeToTrack = node.left.id;
+      
       steps.push({
-        stack: stack.map(n => n.id),
-        stackVals: stack.map(n => n.val),
+        stack: [...stackNodeIds, leftNodeToTrack], // 显示左子节点在栈中，提高可视化效果
+        stackVals: [...stack.map(n => n.val), node.left.val],
         currentId: node.left.id,
         currentVal: node.left.val,
         result: [...result],
@@ -95,11 +101,12 @@ export function inorderTraversalRecursiveWithSteps(root: TreeNode | null): Trave
         action: 'visit',
         description: `递归深度: ${depth} - 移动到节点 ${node.val} 的左子节点 ${node.left.val}`
       });
+      
       inorderWithSteps(node.left, depth + 1);
     } else {
       // 如果没有左子节点
       steps.push({
-        stack: stack.map(n => n.id),
+        stack: [...stackNodeIds],
         stackVals: stack.map(n => n.val),
         currentId: node.id,
         currentVal: node.val,
@@ -113,8 +120,9 @@ export function inorderTraversalRecursiveWithSteps(root: TreeNode | null): Trave
     // 访问当前节点 - 左子树遍历完毕后
     result.push(node.val);
     visitedIds.push(node.id);
+    
     steps.push({
-      stack: stack.map(n => n.id),
+      stack: [...stackNodeIds],
       stackVals: stack.map(n => n.val),
       currentId: node.id,
       currentVal: node.val,
@@ -126,9 +134,12 @@ export function inorderTraversalRecursiveWithSteps(root: TreeNode | null): Trave
     
     // 右子树递归 - 如果有右子节点
     if (node.right) {
+      // 在移动到右子节点前将其加入栈跟踪，但不实际入栈
+      const rightNodeToTrack = node.right.id;
+      
       steps.push({
-        stack: stack.map(n => n.id),
-        stackVals: stack.map(n => n.val),
+        stack: [...stackNodeIds, rightNodeToTrack], // 显示右子节点在栈中，提高可视化效果
+        stackVals: [...stack.map(n => n.val), node.right.val],
         currentId: node.right.id,
         currentVal: node.right.val,
         result: [...result],
@@ -136,11 +147,12 @@ export function inorderTraversalRecursiveWithSteps(root: TreeNode | null): Trave
         action: 'move_right',
         description: `递归深度: ${depth} - 移动到节点 ${node.val} 的右子节点 ${node.right.val}`
       });
+      
       inorderWithSteps(node.right, depth + 1);
     } else {
       // 如果没有右子节点
       steps.push({
-        stack: stack.map(n => n.id),
+        stack: [...stackNodeIds],
         stackVals: stack.map(n => n.val),
         currentId: node.id,
         currentVal: node.val,
@@ -153,9 +165,11 @@ export function inorderTraversalRecursiveWithSteps(root: TreeNode | null): Trave
     
     // 当前节点处理完毕，从栈中弹出 - 递归调用后
     const poppedNode = stack.pop();
+    stackNodeIds.pop(); // 同时从ID追踪栈中移除
+    
     if (poppedNode) {
       steps.push({
-        stack: stack.map(n => n.id),
+        stack: [...stackNodeIds],
         stackVals: stack.map(n => n.val),
         currentId: node.id,
         currentVal: node.val,
