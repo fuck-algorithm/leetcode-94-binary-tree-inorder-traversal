@@ -1,41 +1,69 @@
 .tree-visualization-container {
   width: 100%;
-  height: 100%;
+  height: 100%; /* 使用100%的高度 */
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
-  box-sizing: border-box;
-  padding: 10px;
   overflow: hidden;
+  background-color: #fafafa; /* 轻微的背景色，增加视觉区分 */
+  border-radius: 4px; /* 圆角边框 */
 }
 
 .tree-visualization-svg {
   width: 100%;
   height: 100%;
-  overflow: visible;
   display: block;
 }
 
-.node circle {
-  fill: #95a5a6;
-  stroke: #7f8c8d;
-  stroke-width: 2px;
-  transition: all 0.3s ease;
+.tree-node {
+  cursor: pointer;
 }
 
-.node text {
+.tree-node circle {
+  fill: #fff;
+  stroke: #999;
+  stroke-width: 1.5px;
+  transition: fill 0.3s, stroke 0.3s;
+}
+
+.tree-node.highlighted circle {
+  fill: #ffeb3b;
+  stroke: #f57f17;
+  stroke-width: 2px;
+}
+
+.tree-node.visited circle {
+  fill: #a5d6a7;
+  stroke: #2e7d32;
+  stroke-width: 2px;
+}
+
+.tree-node.in-stack circle {
+  fill: #90caf9;
+  stroke: #1565c0;
+  stroke-width: 2px;
+}
+
+.tree-node text {
   font-size: 14px;
-  fill: #2c3e50;
   text-anchor: middle;
   dominant-baseline: central;
+  pointer-events: none;
+  font-family: 'Arial', sans-serif;
+  fill: #333;
 }
 
-.link {
+.tree-link {
   fill: none;
-  stroke: #bdc3c7;
-  stroke-width: 2px;
-  transition: stroke 0.3s ease;
+  stroke: #999;
+  stroke-width: 1.5px;
+}
+
+/* 动画效果 */
+.tree-node circle,
+.tree-link {
+  transition: all 0.3s ease;
 }
 
 .node-label {
@@ -60,9 +88,29 @@
   fill: #e74c3c;
   stroke: #c0392b;
   stroke-width: 3px;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
 }
 
 .node.stack circle {
   fill: #f39c12;
   stroke: #d35400;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .tree-visualization-container {
+    height: 50vh; /* 在小屏幕上使用视窗高度的50% */
+    min-height: 300px;
+  }
+}
+
+/* 触摸设备优化 */
+@media (pointer: coarse) {
+  .tree-node circle {
+    r: 15; /* 在触摸设备上增加节点大小 */
+  }
+  
+  .tree-node text {
+    font-size: 16px; /* 增加文本大小 */
+  }
 } 

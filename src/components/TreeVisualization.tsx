@@ -29,7 +29,7 @@ export default function TreeVisualization({
     effectiveHeight: height
   });
   
-  // 监听容器大小变化
+  // 监听容器大小变化并最大化利用空间
   useEffect(() => {
     if (!containerRef.current) return;
     
@@ -40,9 +40,9 @@ export default function TreeVisualization({
       const newWidth = Math.max(rect.width, 100);
       const newHeight = Math.max(rect.height, 100);
       
-      // 使用完整的空间，设置少量的内边距以避免节点被裁剪
-      const effectiveWidth = newWidth - 20;
-      const effectiveHeight = newHeight - 20;
+      // 最大化利用可用空间，几乎不设置内边距
+      const effectiveWidth = newWidth - 5;
+      const effectiveHeight = newHeight - 5;
       
       setDimensions({
         width: newWidth,
@@ -55,7 +55,10 @@ export default function TreeVisualization({
     // 初始更新
     updateDimensions();
     
-    const resizeObserver = new ResizeObserver(updateDimensions);
+    const resizeObserver = new ResizeObserver(() => {
+      // 使用requestAnimationFrame减少过度重绘
+      window.requestAnimationFrame(updateDimensions);
+    });
     resizeObserver.observe(containerRef.current);
     
     // 添加窗口resize事件监听
@@ -73,7 +76,7 @@ export default function TreeVisualization({
   useEffect(() => {
     if (!data || !svgRef.current) return;
     
-    // 使用工具函数渲染树
+    // 使用工具函数渲染树并传递栈面板信息
     renderTree(svgRef.current, data, dimensions, {
       highlightedNodeId,
       visitedNodeIds,
@@ -87,12 +90,14 @@ export default function TreeVisualization({
     <div 
       ref={containerRef} 
       className="tree-visualization-container"
+      style={{ width: '100%', height: '100%' }}
     >
       <svg 
         ref={svgRef} 
         width="100%" 
         height="100%" 
         className="tree-visualization-svg"
+        preserveAspectRatio="xMidYMid meet"
       />
     </div>
   );
