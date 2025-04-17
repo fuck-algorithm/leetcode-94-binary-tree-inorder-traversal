@@ -109,7 +109,6 @@ export default function BinaryTreeInorderTraversal() {
   });
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
   const [visitedNodeIds, setVisitedNodeIds] = useState<string[]>([]);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [animationSpeed, setAnimationSpeed] = useState<number>(() => {
     // 从localStorage获取之前保存的动画速度
@@ -118,10 +117,8 @@ export default function BinaryTreeInorderTraversal() {
   });
   const [traversalSteps, setTraversalSteps] = useState<TraversalStep[]>([]);
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [manualMode, setManualMode] = useState<boolean>(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(false);
   const autoPlayTimerRef = useRef<number | null>(null);
-  const showStack = true; // 始终显示栈面板
 
   // 保存动画速度到localStorage
   useEffect(() => {
@@ -228,7 +225,7 @@ export default function BinaryTreeInorderTraversal() {
       // 重置访问状态
       setVisitedNodeIds([]);
       setCurrentNodeId(null);
-      setIsAnimating(false); // 确保不在动画状态
+      setIsAutoPlaying(false); // 确保不在动画状态
       setCurrentStep(0); // 重置步骤
       
       // 移除不必要的空格
