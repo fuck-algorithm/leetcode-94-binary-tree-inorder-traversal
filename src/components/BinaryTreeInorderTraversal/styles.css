@@ -23,15 +23,16 @@
   flex: 1;
   display: flex;
   padding: 10px;
-  gap: 20px;
+  gap: 12px;
   overflow: hidden;
+  background-color: #0F172A;
 }
 
 .tree-section {
-  flex: 3;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex: 4;
+  background-color: #0F172A;
+  border: 1px solid #334155;
+  border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -46,15 +47,18 @@
   overflow: hidden;
 }
 
-.stack-section {
-  flex: 1;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  overflow: hidden;
+.code-debug-section {
+  flex: 2;
+  min-width: 280px;
   display: flex;
   flex-direction: column;
-  min-width: 120px;
+}
+
+.stack-section {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
 }
 
 .controls {
