@@ -224,6 +224,8 @@ export function inorderTraversalIterative(root: TreeNode | null): number[] {
 }
 
 // 带栈状态跟踪的迭代中序遍历
+// Debug 扩展（codeLine / variables / callStack）由 inorderTraversalCodeSteps.ts 的
+// enrichStepsWithDebug 动态附加，保持本接口稳定，不破坏旧消费方。
 export interface TraversalStep {
   stack: string[]; // 当前栈中节点的ID
   stackVals: number[]; // 当前栈中节点的值（用于显示）
