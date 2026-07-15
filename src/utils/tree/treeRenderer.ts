@@ -4,7 +4,8 @@ import { TreeDimensions, TreeRenderOptions, LegendItem } from './treeTypes';
 import { countNodes } from './treeAnalysis';
 import { calculateNodeSize, shiftSubtree } from './treeLayout';
 import { optimizeTreeLayout } from './treeOptimization';
-import { calculateTreeScale } from './treeScaling';
+import { layoutTree, EngineLayout } from './treeEngine';
+import { palette, nodeStrokeColor } from '../../theme/colors';
 
 /**
  * 渲染二叉树
@@ -63,11 +64,7 @@ export const renderTree = (
   
   // 应用树形布局
   const treeData = treeLayout(root);
-  
-  // 获取节点和连接线
-  const nodes = treeData.descendants();
-  const links = treeData.links();
-  
+
   // 优化树布局
   optimizeTreeLayout(treeData, nodeSize, totalNodes);
   
@@ -104,129 +101,165 @@ export const renderTree = (
   
   // 应用左右平衡调整
   adjustLeftRightBalance(treeData);
-  
-  // 计算缩放比例，提高利用率
-  const { scale: finalScale, translateX, translateY } = calculateTreeScale(
-    treeData, dimensions, nodeSize, hasStackPanel
-  );
-  
-  // 创建根容器并应用变换
-  const g = svg.append('g')
-    .attr('transform', `translate(${translateX}, ${translateY}) scale(${finalScale})`);
-  
-  // 绘制连接线，使用适合于缩放的线宽
+
+  // 使用绘制引擎获取结构化布局
+  const engineLayout: EngineLayout = layoutTree(data, dimensions, hasStackPanel);
+  const { nodes: engNodes, links: engLinks, nodeRadius: r } = engineLayout;
+
+  // defs：渐变定义
+  const defs = svg.append('defs');
+  const gradDefs = [
+    { id: 'grad-default', from: '#64748B', to: '#475569' },
+    { id: 'grad-current', from: '#EF4444', to: '#B91C1C' },
+    { id: 'grad-visited', from: '#10B981', to: '#047857' },
+    { id: 'grad-stack', from: '#F59E0B', to: '#B45309' },
+  ];
+  gradDefs.forEach((g) => {
+    const grad = defs
+      .append('linearGradient')
+      .attr('id', g.id)
+      .attr('x1', '0%')
+      .attr('y1', '0%')
+      .attr('x2', '0%')
+      .attr('y2', '100%');
+    grad.append('stop').attr('offset', '0%').attr('stop-color', g.from);
+    grad.append('stop').attr('offset', '100%').attr('stop-color', g.to);
+  });
+
+  // 适配缩放与平移（基于引擎 bounds）
+  const boundsWidth = engineLayout.bounds.maxX - engineLayout.bounds.minX;
+  const boundsHeight = engineLayout.bounds.maxY - engineLayout.bounds.minY;
+  const effW =
+    (dimensions.effectiveWidth || dimensions.width) - (hasStackPanel ? 220 : 4);
+  const effH = (dimensions.effectiveHeight || dimensions.height) - 4;
+  const scale = Math.min(effW / boundsWidth, effH / boundsHeight) * 0.96 || 1;
+  const cx = (engineLayout.bounds.minX + engineLayout.bounds.maxX) / 2;
+  const cy = (engineLayout.bounds.minY + engineLayout.bounds.maxY) / 2;
+  const translateX = effW / 2 - cx * scale - (hasStackPanel ? 110 : 0);
+  const translateY = effH / 2 - cy * scale;
+
+  const g = svg
+    .append('g')
+    .attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
+
+  // 贝塞尔连线，左右子树分别用配色 token
   g.selectAll('.link')
-    .data(links)
+    .data(engLinks)
     .enter()
     .append('path')
     .attr('class', 'link')
     .attr('fill', 'none')
-    .attr('stroke', '#666') 
-    .attr('stroke-width', Math.max(1, 1.5 / finalScale)) // 根据缩放调整线宽
-    .attr('d', d3.linkVertical<d3.HierarchyPointLink<TreeNodeData>, d3.HierarchyPointNode<TreeNodeData>>()
-      .x((d) => d.x)
-      .y((d) => d.y)
-    );
-  
-  // 绘制节点
-  const nodeGroups = g.selectAll('.node')
-    .data(nodes)
+    .attr('stroke', (d) =>
+      d.isLeft ? palette.linkLeft : d.isRight ? palette.linkRight : palette.linkDefault,
+    )
+    .attr('stroke-width', Math.max(1.5, 2.2 / scale))
+    .attr('stroke-linecap', 'round')
+    .attr('d', (d) => {
+      const sx = d.source.x;
+      const sy = d.source.y + r;
+      const tx = d.target.x;
+      const ty = d.target.y - r;
+      const midY = (sy + ty) / 2;
+      return `M${sx},${sy} C${sx},${midY} ${tx},${midY} ${tx},${ty}`;
+    });
+
+  // 节点组：圆角矩形 + 阴影
+  const nodeGroups = g
+    .selectAll('.node')
+    .data(engNodes)
     .enter()
     .append('g')
-    .attr('class', d => {
-      let classes = 'node';
-      
-      // 添加已访问节点的高亮
-      if (visitedNodeIds && visitedNodeIds.includes(d.data.nodeId || '')) {
-        classes += ' visited';
-      }
-      
-      // 添加当前节点的高亮
-      if (highlightedNodeId === d.data.nodeId) {
-        classes += ' current';
-      }
-      
-      // 添加栈中节点的高亮
-      if (stackNodeIds && stackNodeIds.includes(d.data.nodeId || '')) {
-        classes += ' stack';
-      }
-      
-      return classes;
+    .attr('class', (d) => {
+      let cls = 'node';
+      if (visitedNodeIds && visitedNodeIds.includes(d.id)) cls += ' visited';
+      if (highlightedNodeId === d.id) cls += ' current';
+      if (stackNodeIds && stackNodeIds.includes(d.id)) cls += ' stack';
+      return cls;
     })
-    .attr('transform', d => `translate(${d.x}, ${d.y})`);
-  
-  // 使用不同的节点尺寸
-  const circleRadius = nodeSize * (totalNodes <= 3 ? 0.8 : 
-                                   totalNodes <= 10 ? 0.75 : 
-                                   totalNodes <= 20 ? 0.7 : 0.65);
-  
-  // 绘制节点圆形
-  nodeGroups.append('circle')
-    .attr('r', circleRadius)
-    .attr('fill', d => {
-      // 根据节点状态设置不同的颜色
-      if (highlightedNodeId === d.data.nodeId) {
-        return '#e74c3c'; // 当前访问的节点 - 红色
-      } else if (visitedNodeIds && visitedNodeIds.includes(d.data.nodeId || '')) {
-        return '#3498db'; // 已访问节点 - 蓝色
-      } else if (stackNodeIds && stackNodeIds.includes(d.data.nodeId || '')) {
-        return '#f39c12'; // 栈中节点 - 橙色
-      }
-      return '#95a5a6'; // 默认颜色 - 灰色
+    .attr('transform', (d) => `translate(${d.x}, ${d.y})`);
+
+  const rectW = r * 2.4;
+  const rectH = r * 2;
+
+  // 阴影底
+  nodeGroups
+    .append('rect')
+    .attr('x', -rectW / 2 + 1.5)
+    .attr('y', -rectH / 2 + 2)
+    .attr('width', rectW)
+    .attr('height', rectH)
+    .attr('rx', r * 0.45)
+    .attr('ry', r * 0.45)
+    .attr('fill', 'rgba(0,0,0,0.25)')
+    .attr('filter', 'blur(1px)');
+
+  // 节点主体
+  nodeGroups
+    .append('rect')
+    .attr('x', -rectW / 2)
+    .attr('y', -rectH / 2)
+    .attr('width', rectW)
+    .attr('height', rectH)
+    .attr('rx', r * 0.45)
+    .attr('ry', r * 0.45)
+    .attr('fill', (d) => {
+      const isCur = highlightedNodeId === d.id;
+      const isVis = !!(visitedNodeIds && visitedNodeIds.includes(d.id));
+      const isStk = !!(stackNodeIds && stackNodeIds.includes(d.id));
+      if (isCur) return 'url(#grad-current)';
+      if (isVis) return 'url(#grad-visited)';
+      if (isStk) return 'url(#grad-stack)';
+      return 'url(#grad-default)';
     })
-    .attr('stroke', d => {
-      // 根据节点状态设置边框颜色
-      if (highlightedNodeId === d.data.nodeId) {
-        return '#c0392b'; // 当前节点的边框 - 深红色
-      } else if (visitedNodeIds && visitedNodeIds.includes(d.data.nodeId || '')) {
-        return '#2980b9'; // 已访问节点的边框 - 深蓝色
-      } else if (stackNodeIds && stackNodeIds.includes(d.data.nodeId || '')) {
-        return '#d35400'; // 栈中节点的边框 - 深橙色
-      }
-      return '#7f8c8d'; // 默认边框颜色 - 深灰色
-    })
-    .attr('stroke-width', d => 
-      highlightedNodeId === d.data.nodeId ? 
-        Math.max(2, 2.5 / finalScale) : // 当前节点的边框更粗
-        Math.max(1, 1.5 / finalScale)   // 根据缩放调整边框宽度
+    .attr('stroke', (d) =>
+      nodeStrokeColor(
+        highlightedNodeId === d.id,
+        !!(visitedNodeIds && visitedNodeIds.includes(d.id)),
+        !!(stackNodeIds && stackNodeIds.includes(d.id)),
+      ),
+    )
+    .attr('stroke-width', (d) =>
+      highlightedNodeId === d.id
+        ? Math.max(2.5, 3 / scale)
+        : Math.max(1.2, 1.8 / scale),
     );
-  
-  // 绘制节点文本标签，根据节点数量调整大小
-  const fontSize = Math.max(10, Math.min(14, 14 / finalScale)) * 
-                   (totalNodes > 15 ? 0.85 : 1);
-  
-  nodeGroups.append('text')
+
+  // 节点文本
+  const fontSize = Math.max(11, Math.min(15, 15 / scale));
+  nodeGroups
+    .append('text')
     .attr('dy', '0.35em')
     .attr('text-anchor', 'middle')
     .attr('font-size', fontSize)
-    .text(d => d.data.val !== null ? d.data.val : 'null')
-    .attr('fill', '#fff');
+    .attr('font-weight', '700')
+    .attr('fill', palette.textOnColor)
+    .text((d) => (d.val !== null ? d.val : 'null'));
   
   // 为边添加标签 (左/右)，大树时隐藏以减少视觉混乱
   if (totalNodes <= 25) {
     g.selectAll('.edge-label')
-      .data(links)
+      .data(engLinks)
       .enter()
       .append('text')
       .attr('class', 'edge-label')
-      .attr('x', d => (d.source.x + d.target.x) / 2)
-      .attr('y', d => (d.source.y + d.target.y) / 2 - 5)
+      .attr('x', (d) => (d.source.x + d.target.x) / 2)
+      .attr('y', (d) => (d.source.y + d.target.y) / 2 - 5)
       .attr('text-anchor', 'middle')
-      .attr('font-size', Math.max(8, 8 / finalScale) * (totalNodes > 15 ? 0.8 : 1))
-      .text(d => {
+      .attr('font-size', Math.max(8, 8 / scale) * (totalNodes > 15 ? 0.8 : 1))
+      .text((d) => {
         // 显示左/右标签
-        if ((d.target as any).isLeftChild) {
+        if (d.isLeft) {
           return '左';
-        } else if ((d.target as any).isRightChild) {
+        } else if (d.isRight) {
           return '右';
         }
         return '';
       })
-      .attr('fill', d => {
+      .attr('fill', (d) => {
         // 左子树标签使用绿色，右子树标签使用红色
-        if ((d.target as any).isLeftChild) {
+        if (d.isLeft) {
           return '#27ae60';
-        } else if ((d.target as any).isRightChild) {
+        } else if (d.isRight) {
           return '#e74c3c';
         }
         return '#7f8c8d';
