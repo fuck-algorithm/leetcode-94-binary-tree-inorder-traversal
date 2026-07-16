@@ -1,29 +1,30 @@
 /* src/components/CodeDebugPanel.css */
 .code-debug-panel {
-  background-color: #0B1120;
-  border: 1px solid #334155;
+  background-color: var(--c-bg);
+  border: 1px solid var(--c-border);
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  color: #F8FAFC;
+  color: var(--c-text);
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
 }
 
+/* 代码面板头 — 靛蓝渐变 */
 .cdp-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: linear-gradient(90deg, #4F46E5, #3730A3);
-  border-bottom: 1px solid #334155;
+  background: linear-gradient(90deg, var(--c-indigo), var(--c-indigo-dark));
+  border-bottom: 1px solid var(--c-border);
 }
 
 .cdp-title {
   font-weight: 700;
   font-size: 0.9rem;
-  color: #fff;
+  color: var(--c-text-on-color);
 }
 
 .cdp-step-badge {
@@ -36,7 +37,7 @@
 
 .cdp-code-block {
   padding: 8px 0;
-  background-color: #0B1120;
+  background-color: var(--c-bg);
   overflow-y: auto;
   flex: 0 0 auto;
   max-height: 260px;
@@ -51,9 +52,10 @@
   line-height: 1.5;
 }
 
+/* 当前行 — 翠绿左边框 + 翠绿底 */
 .cdp-code-line.cdp-active {
-  background-color: rgba(79, 70, 229, 0.28);
-  border-left: 3px solid #4F46E5;
+  background-color: rgba(16, 185, 129, 0.16);
+  border-left: 3px solid var(--c-emerald);
 }
 
 .cdp-line-no {
@@ -70,19 +72,20 @@
   white-space: pre;
 }
 
+/* 当前行文字 — 琥珀高亮 */
 .cdp-active .cdp-line-text {
-  color: #FBBF24;
+  color: var(--c-amber);
   font-weight: 600;
 }
 
 .cdp-marker {
   margin-left: 8px;
-  color: #FBBF24;
+  color: var(--c-amber);
 }
 
 .cdp-section {
   padding: 8px 12px;
-  border-top: 1px solid #1E293B;
+  border-top: 1px solid var(--c-surface);
 }
 
 .cdp-section-title {
@@ -90,6 +93,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
+  color: var(--c-text-secondary);
 }
 
 .cdp-var-grid {
@@ -99,8 +103,8 @@
 }
 
 .cdp-var-cell {
-  background-color: #1E293B;
-  border: 1px solid #334155;
+  background-color: var(--c-surface);
+  border: 1px solid var(--c-border);
   border-radius: 6px;
   padding: 4px 8px;
   display: flex;
@@ -109,25 +113,26 @@
 }
 
 .cdp-var-cell.cdp-var-highlight {
-  border-color: #4F46E5;
-  background-color: rgba(79, 70, 229, 0.18);
+  border-color: var(--c-indigo);
+  background-color: rgba(99, 102, 241, 0.18);
 }
 
 .cdp-var-name {
   font-size: 0.7rem;
-  color: #94A3B8;
+  color: var(--c-text-secondary);
 }
 
 .cdp-var-value {
   font-size: 0.82rem;
   font-weight: 700;
-  color: #F8FAFC;
+  color: var(--c-text);
 }
 
-.cdp-type-node { color: #10B981; }
-.cdp-type-array { color: #F59E0B; }
-.cdp-type-number { color: #38BDF8; }
-.cdp-type-null { color: #64748B; font-style: italic; }
+/* 变量类型色 — 多彩：node=翠绿 array=琥珀 number=青 null=灰 */
+.cdp-type-node { color: var(--c-emerald); }
+.cdp-type-array { color: var(--c-amber); }
+.cdp-type-number { color: var(--c-cyan); }
+.cdp-type-null { color: var(--c-text-muted); font-style: italic; }
 
 .cdp-callstack {
   display: flex;
@@ -136,7 +141,7 @@
 }
 
 .cdp-frame {
-  background-color: #1E293B;
+  background-color: var(--c-surface);
   border-left: 3px solid #475569;
   padding: 4px 8px;
   border-radius: 4px;
@@ -146,14 +151,15 @@
   align-items: center;
 }
 
+/* 调用栈顶 — 粉红 */
 .cdp-frame-top {
-  border-left-color: #EF4444;
-  background-color: rgba(239, 68, 68, 0.15);
+  border-left-color: var(--c-pink-dark);
+  background-color: rgba(236, 72, 153, 0.15);
 }
 
-.cdp-frame-fn { color: #818CF8; font-weight: 700; }
-.cdp-frame-arg { color: #10B981; }
-.cdp-frame-depth { color: #64748B; margin-left: auto; }
+.cdp-frame-fn { color: var(--c-violet); font-weight: 700; }
+.cdp-frame-arg { color: var(--c-emerald); }
+.cdp-frame-depth { color: var(--c-text-muted); margin-left: auto; }
 
 .cdp-stack-base {
   text-align: center;
