@@ -66,7 +66,7 @@ export const renderTree = (
     .append('g')
     .attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
 
-  // 贝塞尔连线，左右子树分别用配色 token
+  // 贝塞尔连线，左右子树分别用配色 token，扁平描边
   g.selectAll('.link')
     .data(engLinks)
     .enter()
@@ -78,6 +78,7 @@ export const renderTree = (
     )
     .attr('stroke-width', Math.max(1.5, 2.2 / scale))
     .attr('stroke-linecap', 'round')
+    .attr('stroke-opacity', 0.85)
     .attr('d', (d) => {
       const sx = d.source.x;
       const sy = d.source.y + r;
@@ -87,7 +88,7 @@ export const renderTree = (
       return `M${sx},${sy} C${sx},${midY} ${tx},${midY} ${tx},${ty}`;
     });
 
-  // 节点组：圆角矩形 + 阴影
+  // 节点组：圆角矩形 + 柔和阴影 + 光晕高亮
   const nodeGroups = g
     .selectAll('.node')
     .data(engNodes)
@@ -105,27 +106,40 @@ export const renderTree = (
   const rectW = r * 2.4;
   const rectH = r * 2;
 
-  // 阴影底
+  // 当前节点光晕底（仅 current 节点渲染，提升焦点感）
+  nodeGroups
+    .filter((d) => highlightedNodeId === d.id)
+    .append('rect')
+    .attr('x', -rectW / 2 - 4)
+    .attr('y', -rectH / 2 - 4)
+    .attr('width', rectW + 8)
+    .attr('height', rectH + 8)
+    .attr('rx', r * 0.55)
+    .attr('ry', r * 0.55)
+    .attr('fill', 'rgba(239, 68, 68, 0.18)')
+    .attr('filter', 'blur(3px)');
+
+  // 柔和投影底
   nodeGroups
     .append('rect')
-    .attr('x', -rectW / 2 + 1.5)
+    .attr('x', -rectW / 2 + 1)
     .attr('y', -rectH / 2 + 2)
     .attr('width', rectW)
     .attr('height', rectH)
-    .attr('rx', r * 0.45)
-    .attr('ry', r * 0.45)
-    .attr('fill', 'rgba(0,0,0,0.25)')
-    .attr('filter', 'blur(1px)');
+    .attr('rx', r * 0.5)
+    .attr('ry', r * 0.5)
+    .attr('fill', 'rgba(0,0,0,0.35)')
+    .attr('filter', 'blur(1.5px)');
 
-  // 节点主体
+  // 节点主体：圆角矩形 + 渐变填充 + 扁平描边
   nodeGroups
     .append('rect')
     .attr('x', -rectW / 2)
     .attr('y', -rectH / 2)
     .attr('width', rectW)
     .attr('height', rectH)
-    .attr('rx', r * 0.45)
-    .attr('ry', r * 0.45)
+    .attr('rx', r * 0.5)
+    .attr('ry', r * 0.5)
     .attr('fill', (d) => {
       const isCur = highlightedNodeId === d.id;
       const isVis = !!(visitedNodeIds && visitedNodeIds.includes(d.id));
@@ -146,7 +160,20 @@ export const renderTree = (
       highlightedNodeId === d.id
         ? Math.max(2.5, 3 / scale)
         : Math.max(1.2, 1.8 / scale),
-    );
+    )
+    .attr('stroke-opacity', 0.9);
+
+  // 节点顶部高光（增加立体感，扁平风 subtle）
+  nodeGroups
+    .append('rect')
+    .attr('x', -rectW / 2 + 2)
+    .attr('y', -rectH / 2 + 2)
+    .attr('width', rectW - 4)
+    .attr('height', rectH * 0.35)
+    .attr('rx', r * 0.4)
+    .attr('ry', r * 0.4)
+    .attr('fill', 'rgba(255,255,255,0.12)')
+    .attr('pointer-events', 'none');
 
   // 节点文本
   const fontSize = Math.max(11, Math.min(15, 15 / scale));
@@ -157,6 +184,7 @@ export const renderTree = (
     .attr('font-size', fontSize)
     .attr('font-weight', '700')
     .attr('fill', palette.textOnColor)
+    .attr('pointer-events', 'none')
     .text((d) => (d.val !== null ? d.val : 'null'));
   
   // 为边添加标签 (左/右)，大树时隐藏以减少视觉混乱
@@ -170,23 +198,18 @@ export const renderTree = (
       .attr('y', (d) => (d.source.y + d.target.y) / 2 - 5)
       .attr('text-anchor', 'middle')
       .attr('font-size', Math.max(8, 8 / scale) * (totalNodes > 15 ? 0.8 : 1))
+      .attr('font-weight', '600')
+      .attr('fill', palette.textSecondary)
+      .attr('stroke', '#0F172A')
+      .attr('stroke-width', 0.4 / scale)
+      .attr('paint-order', 'stroke')
       .text((d) => {
-        // 显示左/右标签
         if (d.isLeft) {
           return '左';
         } else if (d.isRight) {
           return '右';
         }
         return '';
-      })
-      .attr('fill', (d) => {
-        // 左子树标签使用绿色，右子树标签使用红色
-        if (d.isLeft) {
-          return '#27ae60';
-        } else if (d.isRight) {
-          return '#e74c3c';
-        }
-        return '#7f8c8d';
       });
   }
   
@@ -194,29 +217,29 @@ export const renderTree = (
   const legendFontSize = Math.max(8, Math.min(10, effectiveWidth / 80));
   const legendSize = Math.max(8, Math.min(10, effectiveWidth / 70));
   const legendSpacing = legendSize * 1.5;
-  
+
   const legend = svg.append('g')
     .attr('class', 'legend')
     .attr('transform', `translate(${effectiveWidth - legendSize * 9}, 2)`);
-  
-  // 图例项
+
+  // 图例项 — 全部改用 palette token
   const legendItems: LegendItem[] = [
-    { color: '#95a5a6', text: '未访问' },
-    { color: '#e74c3c', text: '正在访问' },
-    { color: '#3498db', text: '已访问' },
-    { color: '#f39c12', text: '在栈中' },
+    { color: palette.nodeDefault, text: '未访问' },
+    { color: palette.nodeCurrent, text: '正在访问' },
+    { color: palette.nodeVisited, text: '已访问' },
+    { color: palette.nodeInStack, text: '在栈中' },
   ];
-  
+
   // 当节点数量较少时才显示左右子树图例
   if (totalNodes <= 25) {
-    legendItems.push({ color: '#666', textLeft: '左', textRight: '右', text: '左/右子树' });
+    legendItems.push({ color: palette.linkDefault, textLeft: '左', textRight: '右', text: '左/右子树' });
   }
-  
+
   // 绘制图例
   legendItems.forEach((item, i) => {
     const legendItem = legend.append('g')
       .attr('transform', `translate(0, ${i * legendSpacing})`);
-    
+
     if (item.textLeft && item.textRight) {
       // 为左右子树添加组合图例
       legendItem.append('line')
@@ -226,23 +249,34 @@ export const renderTree = (
         .attr('y2', legendSize / 2)
         .attr('stroke', item.color)
         .attr('stroke-width', 1.5);
-      
-      // 添加左右标识文字
+
+      // 添加左右标识文字 — 补 fill
       legendItem.append('text')
         .attr('x', legendSize / 4)
         .attr('y', legendSize / 2 - 3)
         .attr('text-anchor', 'middle')
         .attr('font-size', `${legendFontSize * 0.8}px`)
-        .attr('fill', '#27ae60')
+        .attr('font-weight', '700')
+        .attr('fill', palette.linkLeft)
         .text(item.textLeft);
-      
+
       legendItem.append('text')
         .attr('x', legendSize * 3 / 4)
         .attr('y', legendSize / 2 - 3)
         .attr('text-anchor', 'middle')
         .attr('font-size', `${legendFontSize * 0.8}px`)
-        .attr('fill', '#e74c3c')
+        .attr('font-weight', '700')
+        .attr('fill', palette.linkRight)
         .text(item.textRight);
+
+      // 左/右子树说明文字 — 补 fill（之前缺失导致黑底黑字）
+      legendItem.append('text')
+        .attr('x', legendSize + 5)
+        .attr('y', legendSize / 2)
+        .attr('dominant-baseline', 'central')
+        .attr('font-size', `${legendFontSize}px`)
+        .attr('fill', palette.textSecondary)
+        .text(item.text);
     } else {
       legendItem.append('rect')
         .attr('width', legendSize)
@@ -250,12 +284,13 @@ export const renderTree = (
         .attr('fill', item.color)
         .attr('rx', 2)
         .attr('ry', 2);
-        
+
       legendItem.append('text')
         .attr('x', legendSize + 5)
         .attr('y', legendSize / 2)
         .attr('dominant-baseline', 'central')
         .attr('font-size', `${legendFontSize}px`)
+        .attr('fill', palette.textSecondary)
         .text(item.text);
     }
   });
