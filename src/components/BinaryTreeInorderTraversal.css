@@ -9,8 +9,8 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  background-color: #0F172A;
-  color: #F8FAFC;
+  background-color: var(--c-bg);
+  color: var(--c-text);
 }
 
 .title-container {
@@ -21,10 +21,11 @@
   margin-top: 5px;
 }
 
+/* 返回链接 — 青色 */
 .back-link {
   position: absolute;
   left: 10px;
-  color: #818CF8;
+  color: var(--c-cyan);
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
@@ -32,22 +33,22 @@
   white-space: nowrap;
   padding: 4px 8px;
   border-radius: 4px;
-  background-color: rgba(79, 70, 229, 0.15);
-  border-left: 3px solid #4F46E5;
+  background-color: rgba(6, 182, 212, 0.12);
+  border-left: 3px solid var(--c-cyan);
   display: flex;
   align-items: center;
   z-index: 10;
 }
 
 .back-link:hover {
-  color: #C7D2FE;
-  background-color: rgba(79, 70, 229, 0.28);
+  color: #67E8F9;
+  background-color: rgba(6, 182, 212, 0.22);
   transform: translateX(-2px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 h1 {
-  color: #F8FAFC;
+  color: var(--c-text);
   text-align: center;
   margin: 0 0 1px 0;
   font-size: 1.1rem;
@@ -55,14 +56,15 @@ h1 {
   width: 100%;
 }
 
+/* 题目描述 — 青色左边框 */
 .problem-description {
-  background-color: #1E293B;
+  background-color: var(--c-surface);
   padding: 4px 10px;
   border-radius: 6px;
   margin-bottom: 5px;
-  border-left: 3px solid #4F46E5;
+  border-left: 3px solid var(--c-cyan);
   font-size: 0.75rem;
-  color: #94A3B8;
+  color: var(--c-text-secondary);
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -79,14 +81,15 @@ h1 {
   margin-bottom: 8px;
 }
 
+/* 算法控制区 — 紫色主题 */
 .algorithm-section {
   display: flex;
   align-items: center;
   height: 32px;
   margin: 0;
   padding: 0;
-  background-color: #1E293B;
-  border: 1px solid #334155;
+  background-color: var(--c-surface);
+  border: 1px solid var(--c-border);
   border-radius: 6px;
   width: 100%;
 }
@@ -96,7 +99,7 @@ h1 {
   align-items: center;
   margin: 0;
   padding: 0 10px;
-  border-right: 1px solid #334155;
+  border-right: 1px solid var(--c-border);
   height: 100%;
   flex-shrink: 0;
   min-width: 120px;
@@ -118,7 +121,7 @@ h1 {
 
 .method-selection label input {
   margin-right: 3px;
-  accent-color: #4F46E5;
+  accent-color: var(--c-violet);
 }
 
 .speed-control {
@@ -137,6 +140,7 @@ h1 {
   color: #CBD5E1;
 }
 
+/* 速度滑块 — 紫色填充 */
 .speed-slider {
   -webkit-appearance: none;
   appearance: none;
@@ -147,7 +151,7 @@ h1 {
   margin: 0;
   cursor: pointer;
   --fill-percent: 50%;
-  background: linear-gradient(to right, #4F46E5 var(--fill-percent), #334155 var(--fill-percent));
+  background: linear-gradient(to right, var(--c-violet) var(--fill-percent), var(--c-surface-alt) var(--fill-percent));
   direction: rtl;
 }
 
@@ -156,7 +160,7 @@ h1 {
   appearance: none;
   width: 18px;
   height: 18px;
-  background: #818CF8;
+  background: var(--c-violet);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -165,7 +169,7 @@ h1 {
 .speed-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
-  background: #818CF8;
+  background: var(--c-violet);
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -174,12 +178,12 @@ h1 {
 
 .speed-slider:hover::-webkit-slider-thumb {
   transform: scale(1.2);
-  box-shadow: 0 0 8px rgba(129, 140, 248, 0.6);
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
 }
 
 .speed-slider:hover::-moz-range-thumb {
   transform: scale(1.2);
-  box-shadow: 0 0 8px rgba(129, 140, 248, 0.6);
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
 }
 
 .speed-value {
@@ -190,7 +194,7 @@ h1 {
   flex-shrink: 0;
   margin-left: 8px;
   font-size: 0.8rem;
-  color: #94A3B8;
+  color: var(--c-text-secondary);
 }
 
 .controls-results-wrapper {
@@ -206,8 +210,8 @@ h1 {
   gap: 4px;
   padding: 4px 8px;
   border-radius: 6px;
-  background-color: #1E293B;
-  border: 1px solid #334155;
+  background-color: var(--c-surface);
+  border: 1px solid var(--c-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -216,7 +220,7 @@ h1 {
   align-items: center;
   gap: 6px;
   font-size: 0.8rem;
-  color: #94A3B8;
+  color: var(--c-text-secondary);
 }
 
 .progress-icon {
@@ -234,19 +238,20 @@ h1 {
 .progress-step {
   font-size: 0.7rem;
   font-weight: 500;
-  color: #64748B;
+  color: var(--c-text-muted);
   min-width: 20px;
   text-align: center;
 }
 
+/* 步骤进度条 — 粉色填充 */
 .step-progress-bar {
   -webkit-appearance: none;
   appearance: none;
   flex: 1;
   height: 6px;
   background: linear-gradient(to right,
-    #4F46E5 calc((var(--value) - var(--min)) / (var(--max) - var(--min)) * 100%),
-    #334155 calc((var(--value) - var(--min)) / (var(--max) - var(--min)) * 100%)
+    var(--c-pink) calc((var(--value) - var(--min)) / (var(--max) - var(--min)) * 100%),
+    var(--c-surface-alt) calc((var(--value) - var(--min)) / (var(--max) - var(--min)) * 100%)
   );
   border-radius: 4px;
   outline: none;
@@ -260,7 +265,7 @@ h1 {
   appearance: none;
   width: 14px;
   height: 14px;
-  background: #818CF8;
+  background: var(--c-pink);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -269,7 +274,7 @@ h1 {
 .step-progress-bar::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  background: #818CF8;
+  background: var(--c-pink);
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -278,12 +283,12 @@ h1 {
 
 .step-progress-bar:hover::-webkit-slider-thumb {
   transform: scale(1.1);
-  box-shadow: 0 0 6px rgba(129, 140, 248, 0.6);
+  box-shadow: 0 0 6px rgba(236, 72, 153, 0.6);
 }
 
 .step-progress-bar:hover::-moz-range-thumb {
   transform: scale(1.1);
-  box-shadow: 0 0 6px rgba(129, 140, 248, 0.6);
+  box-shadow: 0 0 6px rgba(236, 72, 153, 0.6);
 }
 
 .step-buttons {
@@ -293,11 +298,12 @@ h1 {
   margin-top: 2px;
 }
 
+/* 播放控制按钮 — 各按钮分色：重置灰、上一步青、播放翠绿、下一步紫、结束粉 */
 .step-buttons button {
   padding: 4px 8px;
-  background-color: #1E293B;
-  color: #F8FAFC;
-  border: 1px solid #334155;
+  background-color: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
@@ -309,8 +315,8 @@ h1 {
 }
 
 .step-buttons button:hover {
-  background-color: #334155;
-  border-color: #4F46E5;
+  background-color: var(--c-surface-alt);
+  border-color: var(--c-violet);
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
@@ -319,6 +325,25 @@ h1 {
   transform: translateY(0);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
+
+/* 各按钮按语义上色：重置=灰、上一步=青、播放/暂停=翠绿/琥珀、下一步=靛、结束=粉 */
+.step-buttons .reset-button { border-color: var(--c-text-muted); }
+.step-buttons .reset-button:hover { border-color: var(--c-cyan); box-shadow: 0 0 0 2px rgba(6,182,212,0.18); }
+
+.step-buttons .prev-button { border-color: var(--c-cyan); }
+.step-buttons .prev-button:hover { background-color: rgba(6,182,212,0.18); border-color: var(--c-cyan); }
+
+.step-buttons .play-button { border-color: var(--c-emerald); background-color: rgba(16,185,129,0.15); }
+.step-buttons .play-button:hover { background-color: var(--c-emerald); color: #06281D; border-color: var(--c-emerald); box-shadow: 0 2px 6px rgba(16,185,129,0.4); }
+
+.step-buttons .pause-button { border-color: var(--c-amber); background-color: rgba(245,158,11,0.15); }
+.step-buttons .pause-button:hover { background-color: var(--c-amber); color: #1A1206; border-color: var(--c-amber); }
+
+.step-buttons .next-button { border-color: var(--c-indigo); }
+.step-buttons .next-button:hover { background-color: rgba(99,102,241,0.18); border-color: var(--c-indigo); }
+
+.step-buttons .end-button { border-color: var(--c-pink); }
+.step-buttons .end-button:hover { background-color: rgba(236,72,153,0.18); border-color: var(--c-pink); }
 
 .button-icon {
   display: inline-block;
@@ -344,9 +369,9 @@ h1 {
 }
 
 .step-buttons button:disabled {
-  background-color: #0F172A;
+  background-color: var(--c-bg);
   color: #475569;
-  border-color: #1E293B;
+  border-color: var(--c-surface);
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -359,7 +384,7 @@ h1 {
   border-radius: 4px;
   margin-bottom: 10px;
   font-size: 0.9rem;
-  border-left: 3px solid #EF4444;
+  border-left: 3px solid var(--c-pink-dark);
 }
 
 .warning-message {
@@ -369,7 +394,7 @@ h1 {
   border-radius: 4px;
   margin-top: 10px;
   font-size: 0.9rem;
-  border-left: 3px solid #F59E0B;
+  border-left: 3px solid var(--c-amber);
   text-align: center;
 }
 
@@ -393,10 +418,12 @@ h1 {
   gap: 15px;
 }
 
+/* 树区与栈区 — 深底 + 各自左边框色区分 */
 .tree-section {
   flex: 3;
-  background-color: #0F172A;
-  border: 1px solid #334155;
+  background-color: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-indigo);
   border-radius: 10px;
   overflow: hidden;
   display: flex;
@@ -414,8 +441,9 @@ h1 {
 
 .stack-section {
   flex: 1;
-  background-color: #0F172A;
-  border: 1px solid #334155;
+  background-color: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-amber);
   border-radius: 10px;
   overflow: hidden;
   display: flex;
@@ -461,7 +489,6 @@ h1 {
   width: 100%;
 }
 
-/* 放大进度条，简化指示器 */
 #progressBarContainer {
   position: relative;
   height: 100%;
@@ -470,7 +497,6 @@ h1 {
   align-items: center;
 }
 
-/* 响应式调整 */
 @media (max-height: 700px) {
   .step-progress-bar {
     height: 5px;
