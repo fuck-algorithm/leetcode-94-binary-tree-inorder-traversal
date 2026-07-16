@@ -3,7 +3,13 @@ name: 部署到Github Pages
 on:
   push:
     branches:
-      - main  # 当推送到main分支时触发
+      - main  # 任何代码变更推送到 main 都触发
+  workflow_dispatch: {}  # 允许在 Actions 页面手动触发，作为兜底
+
+# 部署并发控制：同一分支新 run 开始时取消旧的正在进行的 run
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 # 设置GITHUB_TOKEN的权限
 permissions:
@@ -14,23 +20,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 检出代码
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 设置Node.js环境
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
-          
+
       - name: 安装依赖
         run: npm ci
-        
+
       - name: 构建项目
         run: npm run build
-        
+
       - name: 部署到GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist     # 要部署的文件夹
           branch: gh-pages # 部署到的分支
-          clean: true      # 自动清理旧文件 
+          clean: true      # 自动清理旧文件

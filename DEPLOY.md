@@ -7,10 +7,14 @@
 当代码推送到main分支时，GitHub Actions会自动执行以下步骤：
 
 1. 检出代码
-2. 设置Node.js环境
-3. 安装依赖
-4. 构建项目
+2. 设置Node.js 20环境
+3. 安装依赖（npm ci）
+4. 构建项目（npm run build）
 5. 将构建产物部署到gh-pages分支
+
+> **任何代码变更**推送到 main 都会触发自动部署（不限定路径）。
+> 如遇未自动触发的异常，可在仓库 Actions 页面对 "部署到Github Pages" 工作流手动点击 `Run workflow`（workflow_dispatch）作为兜底。
+> 同一分支新的部署会自动取消旧的正在进行的部署（并发控制）。
 
 ## 配置文件
 
