@@ -6,8 +6,8 @@
   align-items: center;
   position: relative;
   overflow: hidden;
-  background-color: #fafafa; /* 轻微的背景色，增加视觉区分 */
-  border-radius: 4px; /* 圆角边框 */
+  background-color: #0F172A; /* 深色应用背景 */
+  border-radius: 8px; /* 圆角边框 */
 }
 
 .tree-visualization-svg {
@@ -79,21 +79,25 @@
 }
 
 /* 高亮样式 */
-.node.visited circle {
-  fill: #3498db;
-  stroke: #2980b9;
+.node.visited circle,
+.node.visited rect {
+  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
 }
 
-.node.current circle {
-  fill: #e74c3c;
-  stroke: #c0392b;
-  stroke-width: 3px;
-  filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
+.node.current circle,
+.node.current rect {
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6));
+  animation: node-pulse 1.4s ease-in-out infinite;
 }
 
-.node.stack circle {
-  fill: #f39c12;
-  stroke: #d35400;
+.node.stack circle,
+.node.stack rect {
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
+}
+
+@keyframes node-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
 }
 
 /* 响应式调整 */

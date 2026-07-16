@@ -1,9 +1,14 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import TreeVisualization from './TreeVisualization';
-import StackVisualization from './StackVisualization';
+import StackPanel from './StackPanel';
+import CodeDebugPanel from './CodeDebugPanel';
 import TreeInputExamples from './TreeInputExamples';
 import { TreeNode, TreeNodeData, arrayToTree, treeToD3Format } from '../types/TreeNode';
 import { inorderTraversalWithSteps, TraversalStep } from '../algorithms/inorderTraversal';
+import {
+  enrichStepsWithDebug,
+  DebugTraversalStep,
+} from '../algorithms/inorderTraversalCodeSteps';
 import './BinaryTreeInorderTraversal.css';
 
 // 保存到localStorage的键名
@@ -444,21 +449,19 @@ export default function BinaryTreeInorderTraversal() {
     buildTree();
   }, [treeInput]);
   
-  // 获取当前步骤的栈状态
-  const getCurrentStackState = () => {
+  // 获取当前步骤的栈状态（返回 DebugTraversalStep 或 null）
+  const getCurrentStackState = (): DebugTraversalStep | null => {
     if (traversalSteps.length === 0 || currentStep >= traversalSteps.length) {
-      return {
-        stack: [],
-        stackVals: [],
-        currentId: null,
-        currentVal: null,
-        action: 'visit' as const,
-        description: '未开始遍历'
-      };
+      return null;
     }
-    
-    return traversalSteps[currentStep];
+    return debugSteps[currentStep] ?? null;
   };
+
+  // debug 增强步骤（随 method/root 变化重算）
+  const debugSteps: DebugTraversalStep[] = useMemo(
+    () => enrichStepsWithDebug(traversalSteps, method, root),
+    [traversalSteps, method, root],
+  );
 
   // 获取步骤进度
   const getStepProgress = () => {
@@ -665,25 +668,33 @@ export default function BinaryTreeInorderTraversal() {
           <div className="tree-section">
             {treeData && (
               <div className="tree-section-content">
-                <TreeVisualization 
-                  data={treeData} 
+                <TreeVisualization
+                  data={treeData}
                   highlightedNodeId={currentNodeId}
                   visitedNodeIds={visitedNodeIds}
-                  stackNodeIds={getCurrentStackState().stack}
+                  stackNodeIds={getCurrentStackState()?.stack ?? []}
                 />
               </div>
             )}
           </div>
-          
+
+          <div className="code-debug-section">
+            <CodeDebugPanel
+              method={method}
+              currentStep={getCurrentStackState()}
+              totalSteps={traversalSteps.length}
+              stepIndex={currentStep}
+            />
+          </div>
+
           {(method === 'iterative' || method === 'recursive') && (
             <div className="stack-section">
-              <StackVisualization 
-                stack={getCurrentStackState().stack}
-                stackVals={getCurrentStackState().stackVals}
-                currentId={getCurrentStackState().currentId}
-                currentVal={getCurrentStackState().currentVal}
-                action={getCurrentStackState().action}
-                description={getCurrentStackState().description}
+              <StackPanel
+                stack={getCurrentStackState()?.stack ?? []}
+                stackVals={getCurrentStackState()?.stackVals ?? []}
+                currentVal={getCurrentStackState()?.currentVal ?? null}
+                action={getCurrentStackState()?.action ?? 'visit'}
+                description={getCurrentStackState()?.description ?? '未开始遍历'}
                 result={result}
               />
             </div>
