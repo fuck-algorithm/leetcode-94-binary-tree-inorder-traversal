@@ -2,8 +2,6 @@ import * as d3 from 'd3';
 import { TreeNodeData } from '../../types/TreeNode';
 import { TreeDimensions, TreeRenderOptions, LegendItem } from './treeTypes';
 import { countNodes } from './treeAnalysis';
-import { calculateNodeSize, shiftSubtree } from './treeLayout';
-import { optimizeTreeLayout } from './treeOptimization';
 import { layoutTree, EngineLayout } from './treeEngine';
 import { palette, nodeStrokeColor } from '../../theme/colors';
 
@@ -17,92 +15,18 @@ export const renderTree = (
   options: TreeRenderOptions
 ): void => {
   const { highlightedNodeId, visitedNodeIds = [], stackNodeIds = [], hasStackPanel = false } = options;
-  
+
   // 清除之前的内容
   d3.select(svgElement).selectAll('*').remove();
-  
+
   const svg = d3.select(svgElement);
   const totalNodes = countNodes(data);
-  const nodeSize = calculateNodeSize(data, dimensions);
-  
+
   // 计算有效宽度，考虑栈面板，更大化利用空间
-  const stackPanelWidth = hasStackPanel ? 220 : 0; // 根据是否有栈面板调整宽度
+  const stackPanelWidth = hasStackPanel ? 220 : 0;
   const effectiveWidth = (dimensions.effectiveWidth || dimensions.width) - (hasStackPanel ? stackPanelWidth : 0);
-  const effectiveHeight = dimensions.effectiveHeight || dimensions.height;
-  
-  // 计算树的布局尺寸，提高利用率
-  const treeWidth = effectiveWidth * 0.98; // 利用更多水平空间
-  const treeHeight = effectiveHeight * 0.98; // 利用更多垂直空间
-  
-  // 创建树形布局，动态调整节点间距
-  const treeLayout = d3.tree<TreeNodeData>()
-    .size([treeWidth, treeHeight])
-    .nodeSize([
-      // 水平间距 - 为不同大小的树提供适合的间距
-      // 更大的间距有助于避免节点遮挡
-      nodeSize * (totalNodes > 15 ? 5.5 : totalNodes > 7 ? 7.0 : 8.5), 
-      // 垂直间距 - 稍微增加，提高层级区分度
-      nodeSize * (totalNodes > 15 ? 3.0 : totalNodes > 7 ? 3.5 : 4.0)
-    ]);
-  
-  // 转换数据为d3层次结构并应用布局
-  const root = d3.hierarchy(data);
-  
-  // 确保左右子树的区分
-  root.descendants().forEach(node => {
-    if (node.parent) {
-      // 如果是第一个子节点，标记为左子树
-      if (node.parent.children && node.parent.children[0] === node) {
-        (node as any).isLeftChild = true;
-      }
-      // 如果是第二个子节点，标记为右子树
-      else if (node.parent.children && node.parent.children[1] === node) {
-        (node as any).isRightChild = true;
-      }
-    }
-  });
-  
-  // 应用树形布局
-  const treeData = treeLayout(root);
 
-  // 优化树布局
-  optimizeTreeLayout(treeData, nodeSize, totalNodes);
-  
-  // 特别处理左子节点与线的潜在重叠
-  const adjustLeftRightBalance = (node: d3.HierarchyPointNode<TreeNodeData>) => {
-    if (!node.children || node.children.length === 0) return;
-    
-    // 检测是否有左子节点
-    const hasLeftChild = node.children.some(child => (child as any).isLeftChild);
-    // 检测是否有右子节点
-    const hasRightChild = node.children.some(child => (child as any).isRightChild);
-    
-    // 如果只有左子节点，增加向左的额外偏移
-    if (hasLeftChild && !hasRightChild) {
-      const leftChild = node.children.find(child => (child as any).isLeftChild);
-      if (leftChild) {
-        const extraLeftOffset = nodeSize * 1.8;
-        shiftSubtree(leftChild, -extraLeftOffset);
-      }
-    }
-    
-    // 如果只有右子节点，增加向右的额外偏移
-    if (!hasLeftChild && hasRightChild) {
-      const rightChild = node.children.find(child => (child as any).isRightChild);
-      if (rightChild) {
-        const extraRightOffset = nodeSize * 1.2;
-        shiftSubtree(rightChild, extraRightOffset);
-      }
-    }
-    
-    // 递归处理所有子节点
-    node.children.forEach(adjustLeftRightBalance);
-  };
-  
-  // 应用左右平衡调整
-  adjustLeftRightBalance(treeData);
-
-  // 使用绘制引擎获取结构化布局
+  // 使用绘制引擎获取结构化布局（bounds 已含节点半径边距）
   const engineLayout: EngineLayout = layoutTree(data, dimensions, hasStackPanel);
   const { nodes: engNodes, links: engLinks, nodeRadius: r } = engineLayout;
 
@@ -126,7 +50,7 @@ export const renderTree = (
     grad.append('stop').attr('offset', '100%').attr('stop-color', g.to);
   });
 
-  // 适配缩放与平移（基于引擎 bounds）
+  // 适配缩放与平移（基于引擎 bounds，bounds 已含节点半径边距，配合留白不再溢出）
   const boundsWidth = engineLayout.bounds.maxX - engineLayout.bounds.minX;
   const boundsHeight = engineLayout.bounds.maxY - engineLayout.bounds.minY;
   const effW =

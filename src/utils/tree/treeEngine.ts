@@ -101,6 +101,13 @@ export function layoutTree(
     maxY = Math.max(maxY, n.y);
   });
 
+  // bounds 纳入节点半径，使 scale 计算预留节点边距，避免节点溢出/遮挡
+  const pad = nodeRadius + 6;
+  minX -= pad;
+  maxX += pad;
+  minY -= pad;
+  maxY += pad;
+
   return {
     nodes,
     links,
