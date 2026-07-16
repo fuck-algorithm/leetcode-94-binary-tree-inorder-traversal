@@ -4,11 +4,36 @@
   font-weight: 400;
   color-scheme: dark;
   color: #F8FAFC;
-  background-color: #0F172A;
+  background-color: #0B1220;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* 多色相扁平化 CSS 变量（值与 src/theme/colors.ts palette 一致，唯一真源在 palette） */
+  --c-bg: #0B1220;
+  --c-surface: #1E293B;
+  --c-surface-alt: #334155;
+  --c-border: #334155;
+
+  --c-cyan: #06B6D4;
+  --c-cyan-dark: #0891B2;
+  --c-indigo: #6366F1;
+  --c-indigo-dark: #4F46E5;
+  --c-violet: #8B5CF6;
+  --c-violet-dark: #7C3AED;
+  --c-pink: #EC4899;
+  --c-pink-dark: #DB2777;
+  --c-emerald: #10B981;
+  --c-emerald-dark: #059669;
+  --c-amber: #F59E0B;
+  --c-amber-dark: #D97706;
+
+  --c-text: #F8FAFC;
+  --c-text-secondary: #94A3B8;
+  --c-text-muted: #64748B;
+  --c-text-on-color: #FFFFFF;
+  --c-border-active: #6366F1;
 }
 
 body {
@@ -32,25 +57,25 @@ h2 {
 
 button {
   border-radius: 6px;
-  border: 1px solid #334155;
+  border: 1px solid var(--c-border);
   padding: 0.5em 1em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1E293B;
-  color: #F8FAFC;
+  background-color: var(--c-surface);
+  color: var(--c-text);
   cursor: pointer;
   transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
-  background-color: #334155;
-  border-color: #4F46E5;
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+  background-color: var(--c-surface-alt);
+  border-color: var(--c-indigo);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
 }
 
 button:focus,
 button:focus-visible {
-  outline: 2px solid #4F46E5;
+  outline: 2px solid var(--c-indigo);
   outline-offset: 2px;
 }
