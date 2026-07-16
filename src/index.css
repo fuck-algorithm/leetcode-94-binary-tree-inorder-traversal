@@ -31,24 +31,26 @@ h2 {
 }
 
 button {
-  border-radius: 4px;
-  border: 1px solid transparent;
+  border-radius: 6px;
+  border: 1px solid #334155;
   padding: 0.5em 1em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #3498db;
-  color: white;
+  background-color: #1E293B;
+  color: #F8FAFC;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
-  background-color: #2980b9;
+  background-color: #334155;
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
 }
 
 button:focus,
 button:focus-visible {
-  outline: 2px solid #3498db;
+  outline: 2px solid #4F46E5;
   outline-offset: 2px;
 }
