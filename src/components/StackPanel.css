@@ -2,7 +2,7 @@
 .stack-panel {
   background-color: var(--c-surface);
   border: 1px solid var(--c-border);
-  border-radius: 10px;
+  border-radius: 3px;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -29,7 +29,7 @@
 
 .sp-action-badge {
   padding: 3px 10px;
-  border-radius: 12px;
+  border-radius: 3px;
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--c-text-on-color);
@@ -42,7 +42,7 @@
   justify-content: space-between;
   align-items: center;
   background-color: var(--c-bg);
-  border-radius: 6px;
+  border-radius: 3px;
   padding: 5px 8px;
 }
 
@@ -82,7 +82,7 @@
 .sp-stack-item {
   background-color: var(--c-surface-alt);
   border-left: 3px solid #475569;
-  border-radius: 4px;
+  border-radius: 3px;
   padding: 5px 10px;
   display: flex;
   justify-content: space-between;
@@ -106,7 +106,7 @@
   font-size: 0.62rem;
   background: rgba(0,0,0,0.25);
   padding: 1px 6px;
-  border-radius: 8px;
+  border-radius: 3px;
 }
 
 .sp-empty {
@@ -115,7 +115,7 @@
   font-style: italic;
   padding: 12px;
   border: 1px dashed var(--c-border);
-  border-radius: 6px;
+  border-radius: 3px;
 }
 
 .sp-current-val {
@@ -124,7 +124,7 @@
   color: var(--c-emerald);
   background: rgba(16,185,129,0.15);
   padding: 2px 10px;
-  border-radius: 8px;
+  border-radius: 3px;
 }
 
 .sp-current-val.sp-null {
@@ -134,7 +134,7 @@
 
 .sp-desc {
   background-color: var(--c-bg);
-  border-radius: 6px;
+  border-radius: 3px;
   padding: 6px 8px;
   font-size: 0.75rem;
   color: #CBD5E1;

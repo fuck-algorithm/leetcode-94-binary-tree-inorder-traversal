@@ -40,7 +40,6 @@ export function layoutTree(
 ): EngineLayout {
   const effectiveWidth =
     (dimensions.effectiveWidth || dimensions.width) - (hasStackPanel ? 220 : 0);
-  const effectiveHeight = dimensions.effectiveHeight || dimensions.height;
 
   // 基础节点半径，按容器与节点量自适应
   const totalNodes = countNodes(data);
@@ -49,9 +48,9 @@ export function layoutTree(
     26,
   );
 
+  // 仅用 .nodeSize() 驱动布局;.size() 与 .nodeSize() 并存时前者被静默忽略,是误导性死代码,已删除。
   const treeLayout = d3
     .tree<TreeNodeData>()
-    .size([effectiveWidth * 0.92, effectiveHeight * 0.9])
     .nodeSize([
       nodeRadius * (totalNodes > 15 ? 5.0 : totalNodes > 7 ? 6.5 : 8.0),
       nodeRadius * (totalNodes > 15 ? 3.2 : 3.8),
@@ -101,8 +100,8 @@ export function layoutTree(
     maxY = Math.max(maxY, n.y);
   });
 
-  // bounds 纳入节点半径，使 scale 计算预留节点边距，避免节点溢出/遮挡
-  const pad = nodeRadius + 6;
+  // bounds 纳入节点矩形半宽(rectW/2 = r*1.2),使 scale 计算预留矩形边距,避免矩形溢出/遮挡
+  const pad = nodeRadius * 1.2 + 6;
   minX -= pad;
   maxX += pad;
   minY -= pad;

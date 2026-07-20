@@ -59,7 +59,8 @@ export const renderTree = (
   const scale = Math.min(effW / boundsWidth, effH / boundsHeight) * 0.96 || 1;
   const cx = (engineLayout.bounds.minX + engineLayout.bounds.maxX) / 2;
   const cy = (engineLayout.bounds.minY + engineLayout.bounds.maxY) / 2;
-  const translateX = effW / 2 - cx * scale - (hasStackPanel ? 110 : 0);
+  // 纯按 bounds 中心居中;effW 已扣除栈面板宽度(见上方),无需再硬编码偏移,否则树会偏左。
+  const translateX = effW / 2 - cx * scale;
   const translateY = effH / 2 - cy * scale;
 
   const g = svg
@@ -114,8 +115,8 @@ export const renderTree = (
     .attr('y', -rectH / 2 - 4)
     .attr('width', rectW + 8)
     .attr('height', rectH + 8)
-    .attr('rx', r * 0.55)
-    .attr('ry', r * 0.55)
+    .attr('rx', r * 0.12)
+    .attr('ry', r * 0.12)
     .attr('fill', 'rgba(239, 68, 68, 0.18)')
     .attr('filter', 'blur(3px)');
 
@@ -126,8 +127,8 @@ export const renderTree = (
     .attr('y', -rectH / 2 + 2)
     .attr('width', rectW)
     .attr('height', rectH)
-    .attr('rx', r * 0.5)
-    .attr('ry', r * 0.5)
+    .attr('rx', r * 0.12)
+    .attr('ry', r * 0.12)
     .attr('fill', 'rgba(0,0,0,0.35)')
     .attr('filter', 'blur(1.5px)');
 
@@ -138,8 +139,8 @@ export const renderTree = (
     .attr('y', -rectH / 2)
     .attr('width', rectW)
     .attr('height', rectH)
-    .attr('rx', r * 0.5)
-    .attr('ry', r * 0.5)
+    .attr('rx', r * 0.12)
+    .attr('ry', r * 0.12)
     .attr('fill', (d) => {
       const isCur = highlightedNodeId === d.id;
       const isVis = !!(visitedNodeIds && visitedNodeIds.includes(d.id));
@@ -170,8 +171,8 @@ export const renderTree = (
     .attr('y', -rectH / 2 + 2)
     .attr('width', rectW - 4)
     .attr('height', rectH * 0.35)
-    .attr('rx', r * 0.4)
-    .attr('ry', r * 0.4)
+    .attr('rx', r * 0.12)
+    .attr('ry', r * 0.12)
     .attr('fill', 'rgba(255,255,255,0.12)')
     .attr('pointer-events', 'none');
 
@@ -187,15 +188,15 @@ export const renderTree = (
     .attr('pointer-events', 'none')
     .text((d) => (d.val !== null ? d.val : 'null'));
   
-  // 为边添加标签 (左/右)，大树时隐藏以减少视觉混乱
+  // 为边添加标签 (左/右),大树时隐藏以减少视觉混乱;同层间距不足时不渲染以避免与节点矩形重叠
   if (totalNodes <= 25) {
     g.selectAll('.edge-label')
       .data(engLinks)
       .enter()
       .append('text')
       .attr('class', 'edge-label')
-      .attr('x', (d) => (d.source.x + d.target.x) / 2)
-      .attr('y', (d) => (d.source.y + d.target.y) / 2 - 5)
+      .attr('x', (d) => d.source.x + (d.target.x - d.source.x) * 0.7)
+      .attr('y', (d) => d.source.y + (d.target.y - d.source.y) * 0.7 - 5)
       .attr('text-anchor', 'middle')
       .attr('font-size', Math.max(8, 8 / scale) * (totalNodes > 15 ? 0.8 : 1))
       .attr('font-weight', '600')
@@ -204,23 +205,44 @@ export const renderTree = (
       .attr('stroke-width', 0.4 / scale)
       .attr('paint-order', 'stroke')
       .text((d) => {
-        if (d.isLeft) {
-          return '左';
-        } else if (d.isRight) {
-          return '右';
-        }
+        if (!d.isLeft && !d.isRight) return '';
+        // 同层相邻节点间距不足时不渲染,避免标签与节点矩形重叠
+        const siblings = engNodes.filter((n) => n.depth === d.target.depth);
+        const idx = siblings.findIndex((n) => n.id === d.target.id);
+        const left = idx > 0 ? siblings[idx - 1] : null;
+        const right = idx < siblings.length - 1 ? siblings[idx + 1] : null;
+        const minGap = rectW * 1.2;
+        if (left && Math.abs(d.target.x - left.x) < minGap) return '';
+        if (right && Math.abs(right.x - d.target.x) < minGap) return '';
+        if (d.isLeft) return '左';
+        if (d.isRight) return '右';
         return '';
       });
   }
   
-  // 添加图例 - 移到右上角
+  // 添加图例 - 右上角,带半透明背板避免与树叠加遮挡
   const legendFontSize = Math.max(8, Math.min(10, effectiveWidth / 80));
   const legendSize = Math.max(8, Math.min(10, effectiveWidth / 70));
   const legendSpacing = legendSize * 1.5;
+  const legendItemCount = totalNodes <= 25 ? 5 : 4;
+  const legendBoxW = legendSize * 9;
+  const legendBoxH = legendSpacing * legendItemCount + 8;
 
   const legend = svg.append('g')
     .attr('class', 'legend')
-    .attr('transform', `translate(${effectiveWidth - legendSize * 9}, 2)`);
+    .attr('transform', `translate(${effectiveWidth - legendBoxW - 6}, 6)`);
+
+  // 图例背板 — 半透明深底 + 小圆角 + 边框,确保压在树上方时仍可读
+  legend.append('rect')
+    .attr('x', -4)
+    .attr('y', -4)
+    .attr('width', legendBoxW + 8)
+    .attr('height', legendBoxH)
+    .attr('rx', 3)
+    .attr('ry', 3)
+    .attr('fill', 'rgba(15, 23, 42, 0.82)')
+    .attr('stroke', 'rgba(99, 102, 241, 0.4)')
+    .attr('stroke-width', 1);
 
   // 图例项 — 全部改用 palette token
   const legendItems: LegendItem[] = [

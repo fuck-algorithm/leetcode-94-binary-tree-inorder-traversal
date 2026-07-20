@@ -56,7 +56,7 @@ h2 {
 }
 
 button {
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--c-border);
   padding: 0.5em 1em;
   font-size: 1em;
