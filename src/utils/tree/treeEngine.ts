@@ -40,6 +40,7 @@ export function layoutTree(
 ): EngineLayout {
   const effectiveWidth =
     (dimensions.effectiveWidth || dimensions.width) - (hasStackPanel ? 220 : 0);
+  const effectiveHeight = dimensions.effectiveHeight || dimensions.height;
 
   // 基础节点半径，按容器与节点量自适应
   const totalNodes = countNodes(data);
@@ -48,13 +49,15 @@ export function layoutTree(
     26,
   );
 
-  // 仅用 .nodeSize() 驱动布局;.size() 与 .nodeSize() 并存时前者被静默忽略,是误导性死代码,已删除。
+  // 用 .size([W,H]) 让 d3 把树映射到 [0,W]×[0,H] 范围(根顶部居中 x=W/2、y=0,
+  // 与渲染器 x=水平/y=垂直假设一致),坐标贴合容器不再散落/压扁。
+  // .separation((a,b)=>1) 强制同层节点均匀分布——加大非同胞 separation 反而把左右
+  // 子树推远、压缩子树内部同胞间距(底层节点被挤重叠),均匀=1 才能保证底层不重叠。
+  // 上一轮用 .nodeSize([r*8,r*3.8]) 间距过大(7节点 bounds 宽 906>容器 800,scale 拉伸变形),已弃用。
   const treeLayout = d3
     .tree<TreeNodeData>()
-    .nodeSize([
-      nodeRadius * (totalNodes > 15 ? 5.0 : totalNodes > 7 ? 6.5 : 8.0),
-      nodeRadius * (totalNodes > 15 ? 3.2 : 3.8),
-    ]);
+    .size([effectiveWidth * 0.92, effectiveHeight * 0.9])
+    .separation(() => 1);
 
   const root = d3.hierarchy(data);
 
