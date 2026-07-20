@@ -50,7 +50,8 @@ export const renderTree = (
     grad.append('stop').attr('offset', '100%').attr('stop-color', g.to);
   });
 
-  // 适配缩放与平移（基于引擎 bounds，bounds 已含节点半径边距，配合留白不再溢出）
+  // 适配缩放与平移:.size 模式 bounds 天然贴合容器范围,加 pad 后略超,scale≈1(略小给矩形留边距);
+  // translate 纯按 bounds 中心居中,effW 已扣除栈面板宽度(见上方)。
   const boundsWidth = engineLayout.bounds.maxX - engineLayout.bounds.minX;
   const boundsHeight = engineLayout.bounds.maxY - engineLayout.bounds.minY;
   const effW =
@@ -59,7 +60,6 @@ export const renderTree = (
   const scale = Math.min(effW / boundsWidth, effH / boundsHeight) * 0.96 || 1;
   const cx = (engineLayout.bounds.minX + engineLayout.bounds.maxX) / 2;
   const cy = (engineLayout.bounds.minY + engineLayout.bounds.maxY) / 2;
-  // 纯按 bounds 中心居中;effW 已扣除栈面板宽度(见上方),无需再硬编码偏移,否则树会偏左。
   const translateX = effW / 2 - cx * scale;
   const translateY = effH / 2 - cy * scale;
 
