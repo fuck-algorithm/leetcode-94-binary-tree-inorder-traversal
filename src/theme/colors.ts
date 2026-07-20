@@ -16,8 +16,6 @@ export const palette = {
   cyanDark: '#0891B2',
   indigo: '#6366F1',        // 靛 - 输入区/构建按钮     =var(--c-indigo)
   indigoDark: '#4F46E5',
-  violet: '#8B5CF6',        // 紫 - 速度/方法控制       =var(--c-violet)
-  violetDark: '#7C3AED',
   pink: '#EC4899',          // 粉 - 步骤进度条          =var(--c-pink)
   pinkDark: '#DB2777',
   emerald: '#10B981',       // 翠绿 - 播放/随机/操作     =var(--c-emerald)
@@ -42,7 +40,7 @@ export const palette = {
     push: '#10B981',        // 入栈 - 绿
     pop: '#EF4444',         // 出栈 - 红
     visit: '#F59E0B',       // 访问 - 琥珀
-    moveRight: '#8B5CF6',   // 右移 - 紫
+    moveRight: '#EC4899',   // 右移 - 粉(原紫,移除紫色配色)
     init: '#6366F1',        // 初始化 - 靛
   } as const,
 

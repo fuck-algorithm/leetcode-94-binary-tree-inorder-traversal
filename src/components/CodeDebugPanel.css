@@ -157,7 +157,7 @@
   background-color: rgba(236, 72, 153, 0.15);
 }
 
-.cdp-frame-fn { color: var(--c-violet); font-weight: 700; }
+.cdp-frame-fn { color: var(--c-indigo); font-weight: 700; }
 .cdp-frame-arg { color: var(--c-emerald); }
 .cdp-frame-depth { color: var(--c-text-muted); margin-left: auto; }
 
