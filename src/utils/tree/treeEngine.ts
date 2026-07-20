@@ -42,7 +42,6 @@ export function layoutTree(
 ): EngineLayout {
   const effectiveWidth =
     (dimensions.effectiveWidth || dimensions.width) - (hasStackPanel ? 220 : 0);
-  const effectiveHeight = dimensions.effectiveHeight || dimensions.height;
 
   const totalNodes = countNodes(data);
   // 节点半径按容器与节点量自适应,矩形宽 rectW=r*2.4
