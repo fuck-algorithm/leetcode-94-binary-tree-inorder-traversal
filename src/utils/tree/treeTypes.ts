@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { TreeNodeData } from '../../types/TreeNode';
 
 export interface TreeDimensions {

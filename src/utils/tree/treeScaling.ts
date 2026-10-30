@@ -17,9 +17,10 @@ export const calculateTreeScale = (
   let minY = Infinity;
   let maxY = -Infinity;
   
+  type PositionedNode = d3.HierarchyPointNode<TreeNodeData> & { isLeftChild?: boolean };
   rootNode.descendants().forEach(node => {
     // 为左侧节点添加额外的边距，避免遮挡
-    const leftExtraMargin = (node as any).isLeftChild ? nodeSize * 0.5 : 0;
+    const leftExtraMargin = (node as PositionedNode).isLeftChild ? nodeSize * 0.5 : 0;
     minX = Math.min(minX, node.x - nodeSize - leftExtraMargin);
     maxX = Math.max(maxX, node.x + nodeSize);
     minY = Math.min(minY, node.y - nodeSize);

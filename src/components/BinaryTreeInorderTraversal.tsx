@@ -29,16 +29,18 @@ const SPEED_CONFIG = {
 interface VisualizationBottomControlsProps {
   currentStep: number;
   setCurrentStep: (step: number) => void;
-  traversalSteps: any[]; // 根据实际类型修改
+  traversalSteps: TraversalStep[];
+  setIsAutoPlaying: (playing: boolean) => void;
   setCurrentNodeId: (id: string | null) => void;
-  setResult: (result: any[]) => void; // 根据实际类型修改
+  setResult: (result: number[]) => void;
   setVisitedNodeIds: (ids: string[]) => void;
 }
 
 const VisualizationBottomControls: React.FC<VisualizationBottomControlsProps> = ({ 
   currentStep, 
   setCurrentStep, 
-  traversalSteps, 
+  traversalSteps,
+  setIsAutoPlaying,
   setCurrentNodeId, 
   setResult, 
   setVisitedNodeIds 
@@ -57,6 +59,7 @@ const VisualizationBottomControls: React.FC<VisualizationBottomControlsProps> = 
 
   const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const step = parseInt(e.target.value);
+    setIsAutoPlaying(false);
     setCurrentStep(step);
     
     // 更新节点状态和结果
@@ -707,6 +710,7 @@ export default function BinaryTreeInorderTraversal() {
         currentStep={currentStep}
         setCurrentStep={setCurrentStep}
         traversalSteps={traversalSteps}
+        setIsAutoPlaying={setIsAutoPlaying}
         setCurrentNodeId={setCurrentNodeId}
         setResult={setResult}
         setVisitedNodeIds={setVisitedNodeIds}

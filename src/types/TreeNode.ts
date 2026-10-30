@@ -28,23 +28,23 @@ export function arrayToTree(arr: (number | null)[]): TreeNode | null {
   if (!arr.length || arr[0] === null) return null;
   
   const root = new TreeNode(arr[0]);
-  const queue: [TreeNode, number][] = [[root, 0]];
-  
-  while (queue.length) {
-    const [node, index] = queue.shift()!;
-    
-    // 计算左子节点索引
-    const leftIndex = 2 * index + 1;
-    if (leftIndex < arr.length && arr[leftIndex] !== null) {
-      node.left = new TreeNode(arr[leftIndex] as number);
-      queue.push([node.left, leftIndex]);
+  const queue: TreeNode[] = [root];
+  let index = 1;
+
+  while (queue.length > 0 && index < arr.length) {
+    const node = queue.shift()!;
+    const leftValue = arr[index++];
+    if (leftValue !== null && leftValue !== undefined) {
+      node.left = new TreeNode(leftValue);
+      queue.push(node.left);
     }
-    
-    // 计算右子节点索引
-    const rightIndex = 2 * index + 2;
-    if (rightIndex < arr.length && arr[rightIndex] !== null) {
-      node.right = new TreeNode(arr[rightIndex] as number);
-      queue.push([node.right, rightIndex]);
+
+    if (index < arr.length) {
+      const rightValue = arr[index++];
+      if (rightValue !== null && rightValue !== undefined) {
+        node.right = new TreeNode(rightValue);
+        queue.push(node.right);
+      }
     }
   }
   

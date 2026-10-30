@@ -10,6 +10,9 @@ export const optimizeTreeLayout = (
   nodeSize: number,
   totalNodes: number
 ): void => {
+  type PositionedNode = d3.HierarchyPointNode<TreeNodeData> & { isLeftChild?: boolean; isRightChild?: boolean };
+  const positioned = (node: d3.HierarchyPointNode<TreeNodeData>): PositionedNode => node as PositionedNode;
+
   // 按深度收集节点
   const nodesByDepth: Map<number, d3.HierarchyPointNode<TreeNodeData>[]> = new Map();
   
@@ -45,12 +48,12 @@ export const optimizeTreeLayout = (
       let adjustedMinDistance = minSpacing;
       
       // 如果前一个节点是某个节点的左子节点，增加间距
-      if ((prevNode as any).isLeftChild) {
+      if (positioned(prevNode).isLeftChild) {
         adjustedMinDistance *= leftNodeSpacingFactor;
       }
       
       // 如果当前节点是某个节点的右子节点，也适当增加间距
-      if ((currentNode as any).isRightChild) {
+      if (positioned(currentNode).isRightChild) {
         adjustedMinDistance *= rightNodeSpacingFactor;
       }
       
@@ -72,8 +75,8 @@ export const optimizeTreeLayout = (
         // 只有一个子节点的情况
         if (parent.children && parent.children.length === 1) {
           // 判断是左子节点还是右子节点
-          const isLeftChild = (node as any).isLeftChild || 
-                            (parent.children[0] === node && !(node as any).isRightChild);
+          const isLeftChild = positioned(node).isLeftChild ||
+                            (parent.children[0] === node && !positioned(node).isRightChild);
           
           // 为左右子节点使用不同的间距
           const expectedX = isLeftChild 
@@ -171,7 +174,7 @@ export const optimizeTreeLayout = (
   }
   
   // 如果根节点只有右子树，向左移动整个树
-  if (treeData.children && treeData.children.length === 1 && (treeData.children[0] as any).isRightChild) {
+  if (treeData.children && treeData.children.length === 1 && positioned(treeData.children[0]).isRightChild) {
     const offset = -horizontalSpacing;
     shiftSubtree(treeData, offset);
   }

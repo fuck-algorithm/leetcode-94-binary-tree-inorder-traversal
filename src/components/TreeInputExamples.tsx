@@ -15,7 +15,7 @@ const TreeInputExamples: React.FC<TreeInputExamplesProps> = ({
   onGenerateRandomTree
 }) => {
   
-  const useExample = (example: string) => {
+  const selectExample = (example: string) => {
     onTreeInputChange(example);
     onBuildTree();
   };
@@ -49,21 +49,21 @@ const TreeInputExamples: React.FC<TreeInputExamplesProps> = ({
           </button>
           <button
             className="example-button"
-            onClick={() => useExample('[1,null,2,3]')}
+            onClick={() => selectExample('[1,null,2,3]')}
             title="[1,null,2,3]"
           >
             例1
           </button>
           <button
             className="example-button"
-            onClick={() => useExample('[5,4,7,3,null,2,null,-1,null,9]')}
+            onClick={() => selectExample('[5,4,7,3,null,2,null,-1,null,9]')}
             title="[5,4,7,3,null,2,null,-1,null,9]"
           >
             例2
           </button>
           <button
             className="example-button"
-            onClick={() => useExample('[1,2,3,4,5,6,7]')}
+            onClick={() => selectExample('[1,2,3,4,5,6,7]')}
             title="[1,2,3,4,5,6,7]"
           >
             例3
