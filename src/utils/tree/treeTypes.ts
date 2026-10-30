@@ -12,6 +12,8 @@ export interface TreeRenderOptions {
   visitedNodeIds?: string[];
   stackNodeIds?: string[];
   hasStackPanel?: boolean;
+  action?: string;
+  narration?: string;
   nodeData?: TreeNodeData;
 }
 

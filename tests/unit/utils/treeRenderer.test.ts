@@ -64,8 +64,14 @@ describe('tree renderer motion', () => {
     const svg = createSvg()
     document.body.append(svg)
 
-    renderTree(svg, data, dimensions, { highlightedNodeId: data.children?.[0].nodeId })
+    renderTree(svg, data, dimensions, {
+      highlightedNodeId: data.children?.[0].nodeId,
+      action: 'pop',
+      narration: '回溯到父节点后继续中序遍历。',
+    })
     expect(svg.querySelectorAll('[data-status="current"]')).toHaveLength(1)
     expect(svg.querySelector(`[data-node-id="${data.children?.[0].nodeId}"]`)?.getAttribute('data-status')).toBe('current')
+    expect(svg.querySelector('.action-arrow-title')?.textContent).toBe('弹出回溯')
+    expect(svg.querySelector('.action-arrow-note')?.textContent).toContain('回溯到父节点')
   })
 })

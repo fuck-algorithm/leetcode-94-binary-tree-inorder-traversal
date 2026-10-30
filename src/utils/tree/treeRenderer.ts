@@ -24,11 +24,22 @@ function prepareLayers(svg: d3.Selection<SVGSVGElement, unknown, null, undefined
     .attr('markerWidth', 5).attr('markerHeight', 5).attr('orient', 'auto')
   marker.selectAll('path').data([null]).join('path').attr('d', 'M0,-4L9,0L0,4')
     .attr('fill', palette.linkDefault)
+  const actionMarker = defs.selectAll<SVGMarkerElement, string>('#tree-action-arrow').data(['tree-action-arrow']).join('marker')
+    .attr('id', 'tree-action-arrow').attr('viewBox', '0 -6 12 12').attr('refX', 10).attr('refY', 0)
+    .attr('markerWidth', 6).attr('markerHeight', 6).attr('orient', 'auto')
+  actionMarker.selectAll('path').data([null]).join('path').attr('d', 'M0,-5L11,0L0,5Z').attr('fill', '#F0C46A')
 
   const root = svg.selectAll<SVGGElement, string>('g.tree-motion-root').data(['tree']).join('g')
     .attr('class', 'tree-motion-root')
   const layer = (className: string) => root.selectAll<SVGGElement, string>(`g.${className}`).data([className]).join('g').attr('class', className)
-  return { root, edges: layer('layer-edges'), nodes: layer('layer-nodes'), labels: layer('layer-labels'), legend: layer('layer-legend') }
+  return {
+    root,
+    edges: layer('layer-edges'),
+    arrows: layer('layer-arrows'),
+    nodes: layer('layer-nodes'),
+    labels: layer('layer-labels'),
+    legend: layer('layer-legend'),
+  }
 }
 
 function fadeExit<T extends d3.BaseType, Datum>(selection: d3.Selection<T, Datum, SVGGElement, unknown>, duration: number) {
@@ -42,10 +53,10 @@ export const renderTree = (
   dimensions: TreeDimensions,
   options: TreeRenderOptions,
 ): void => {
-  const { highlightedNodeId, visitedNodeIds = [], stackNodeIds = [] } = options
+  const { highlightedNodeId, visitedNodeIds = [], stackNodeIds = [], action = 'init', narration = '' } = options
   const svg = d3.select(svgElement)
   const layout = layoutTreeForMotion(data, dimensions)
-  const { root, edges, nodes, labels, legend } = prepareLayers(svg)
+  const { root, edges, arrows, nodes, labels, legend } = prepareLayers(svg)
   const { minX, maxX, minY, maxY } = layout.bounds
   const effectiveWidth = Math.max(100, dimensions.effectiveWidth || dimensions.width)
   const effectiveHeight = Math.max(100, dimensions.effectiveHeight || dimensions.height)
@@ -105,6 +116,38 @@ export const renderTree = (
     .on('end', function () { d3.select(this).attr('data-entering', null) })
 
   const labelData = edgeData.map((edge) => ({ id: edge.id, text: edge.isLeft ? '左' : '右', x: edge.source.x + (edge.target.x - edge.source.x) * 0.58, y: edge.source.y + (edge.target.y - edge.source.y) * 0.58 }))
+  const focusedNode = layout.nodes.find((node) => node.id === highlightedNodeId)
+  const actionArrowData = focusedNode && ['push', 'pop', 'visit', 'move_right'].includes(action)
+    ? [{
+        id: `action-${action}-${highlightedNodeId}`,
+        x1: focusedNode.x - layout.nodeRadius * 0.8,
+        y1: focusedNode.y - layout.nodeRadius * 0.25,
+        x2: focusedNode.x + layout.nodeRadius * 0.8,
+        y2: focusedNode.y - layout.nodeRadius * 0.25,
+        text: action === 'push' ? '压入栈' : action === 'pop' ? '弹出回溯' : action === 'move_right' ? '转向右子树' : '访问并记录',
+        note: narration,
+      }]
+    : []
+  const actionJoin = arrows.selectAll<SVGGElement, (typeof actionArrowData)[number]>('g.action-arrow')
+    .data(actionArrowData, (item) => item.id)
+  fadeExit(actionJoin.exit(), transitionDuration('exit'))
+  const actionEnter = actionJoin.enter().append('g').attr('class', 'action-arrow').attr('opacity', 0)
+  actionEnter.append('path').attr('class', 'action-arrow-line').attr('fill', 'none').attr('marker-end', 'url(#tree-action-arrow)')
+  actionEnter.append('path').attr('class', 'action-arrow-stem').attr('fill', 'none').attr('marker-end', 'url(#tree-action-arrow)')
+  actionEnter.append('rect').attr('class', 'action-arrow-card').attr('rx', 7)
+  actionEnter.append('text').attr('class', 'action-arrow-title').attr('text-anchor', 'middle')
+  actionEnter.append('text').attr('class', 'action-arrow-note').attr('text-anchor', 'middle')
+  const actionMerged = actionEnter.merge(actionJoin as typeof actionEnter).interrupt('exit')
+    .attr('data-operation', action)
+    .attr('data-anchor-node', highlightedNodeId ?? '')
+  actionMerged.select('path.action-arrow-line').attr('d', (item) => `M${item.x1},${item.y1} Q${(item.x1 + item.x2) / 2},${item.y1 - 12} ${item.x2},${item.y2}`)
+  actionMerged.select('path.action-arrow-stem').attr('d', (item) => `M${(item.x1 + item.x2) / 2},${item.y1 - 2} L${(item.x1 + item.x2) / 2},${item.y1 - 23}`)
+  actionMerged.select('rect.action-arrow-card').attr('x', (item) => (item.x1 + item.x2) / 2 - 62).attr('y', (item) => item.y1 - 70).attr('width', 124).attr('height', 38)
+  actionMerged.select('text.action-arrow-title').attr('x', (item) => (item.x1 + item.x2) / 2).attr('y', (item) => item.y1 - 54).text((item) => item.text)
+  actionMerged.select('text.action-arrow-note').attr('x', (item) => (item.x1 + item.x2) / 2).attr('y', (item) => item.y1 - 38).text((item) => item.note.length > 36 ? `${item.note.slice(0, 35)}…` : item.note)
+  if (reduced) actionMerged.attr('opacity', 1)
+  else actionMerged.transition('update').duration(transitionDuration('update')).attr('opacity', 1)
+
   const labelJoin = labels.selectAll<SVGTextElement, (typeof labelData)[number]>('text.edge-label').data(labelData, (d) => d.id)
   labelJoin.exit().transition('exit').duration(transitionDuration('exit')).attr('opacity', 0).on('end', function () { d3.select(this).remove() })
   const labelEnter = labelJoin.enter().append('text').attr('class', 'edge-label').attr('opacity', 0).attr('text-anchor', 'middle')

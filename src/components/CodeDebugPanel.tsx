@@ -6,6 +6,21 @@ import {
 } from '../algorithms/inorderTraversalCodeSteps';
 import './CodeDebugPanel.css';
 
+const CODE_TOKEN = /(\\b(?:function|const|let|while|if|return|null|true|false)\\b|\\b\\d+\\b|=>|===|!==|&&|\\|\\||[{}()[\\].,;])/g;
+
+function renderCodeLine(line: string) {
+  return line.split(CODE_TOKEN).filter(Boolean).map((token, index) => {
+    const kind = /^(function|const|let|while|if|return)$/.test(token)
+      ? 'keyword'
+      : /^(null|true|false|\\d+)$/.test(token)
+        ? 'literal'
+        : /^(=>|===|!==|&&|\\|\\||[{}()[\\].,;])$/.test(token)
+          ? 'punctuation'
+          : '';
+    return kind ? <span key={index} className={`cdp-token-${kind}`}>{token}</span> : token;
+  });
+}
+
 interface CodeDebugPanelProps {
   method: 'recursive' | 'iterative';
   currentStep: DebugTraversalStep | null;
@@ -21,6 +36,8 @@ export default function CodeDebugPanel({
 }: CodeDebugPanelProps) {
   const codeLines = getCodeLines(method);
   const activeLine = currentStep?.codeLine ?? 1;
+  const stackPreview = currentStep?.variables.find((variable) => variable.name === 'stack')?.value ?? '[]';
+  const resultPreview = currentStep?.variables.find((variable) => variable.name === 'result')?.value ?? '[]';
 
   // 先判空再渲染调用栈，避免 `.map().reverse()` 的潜在类型/可读性问题。
   // callStack 仅在 currentStep 为 null 时缺失；map 返回新数组，reverse 它是安全的原地操作。
@@ -48,9 +65,9 @@ export default function CodeDebugPanel({
   return (
     <div className="code-debug-panel">
       <div className="cdp-header">
-        <span className="cdp-title">▸ AC 代码 Debug</span>
+        <span className="cdp-title">算法代码</span>
         <span className="cdp-step-badge">
-          {method === 'recursive' ? '递归' : '迭代'} · step {stepIndex + 1}/{totalSteps}
+          {method === 'recursive' ? '递归' : '迭代'} · {stepIndex + 1}/{totalSteps}
         </span>
       </div>
 
@@ -62,41 +79,45 @@ export default function CodeDebugPanel({
             <div
               key={lineNo}
               className={`cdp-code-line ${isActive ? 'cdp-active' : ''}`}
+              data-line={lineNo}
             >
               <span className="cdp-line-no">{lineNo}</span>
-              <code className="cdp-line-text">{line || ' '}</code>
-              {isActive && <span className="cdp-marker">▶</span>}
+              <code className="cdp-line-text">{renderCodeLine(line || ' ')}</code>
+              {isActive && <span className="cdp-marker" aria-label="当前执行行">●</span>}
             </div>
           );
         })}
       </div>
 
-      <div className="cdp-section">
-        <div className="cdp-section-title" style={{ color: palette.textSecondary }}>
-          变量内存
-        </div>
-        <div className="cdp-var-grid">
-          {currentStep?.variables.map((v) => (
-            <div
-              key={v.name}
-              className={`cdp-var-cell ${v.highlight ? 'cdp-var-highlight' : ''}`}
-            >
-              <span className="cdp-var-name">{v.name}</span>
-              <span className={`cdp-var-value cdp-type-${v.type}`}>{v.value}</span>
-            </div>
-          )) ?? null}
-        </div>
+      <div className="cdp-state-strip" aria-label="当前变量快照">
+        <span><b>stack</b><code>{stackPreview}</code></span>
+        <span><b>result</b><code>{resultPreview}</code></span>
       </div>
 
-      <div className="cdp-section">
-        <div className="cdp-section-title" style={{ color: palette.textSecondary }}>
-          调用栈
+      <details className="cdp-details">
+        <summary>变量与调用栈</summary>
+        <div className="cdp-section">
+          <div className="cdp-section-title" style={{ color: palette.textSecondary }}>变量内存</div>
+          <div className="cdp-var-grid">
+            {currentStep?.variables.map((v) => (
+              <div
+                key={v.name}
+                className={`cdp-var-cell ${v.highlight ? 'cdp-var-highlight' : ''}`}
+              >
+                <span className="cdp-var-name">{v.name}</span>
+                <span className={`cdp-var-value cdp-type-${v.type}`}>{v.value}</span>
+              </div>
+            )) ?? null}
+          </div>
         </div>
-        <div className="cdp-callstack">
-          {callStackFrames}
-          <div className="cdp-stack-base">▲ 栈底</div>
+        <div className="cdp-section">
+          <div className="cdp-section-title" style={{ color: palette.textSecondary }}>调用栈</div>
+          <div className="cdp-callstack">
+            {callStackFrames}
+            <div className="cdp-stack-base">▲ 栈底</div>
+          </div>
         </div>
-      </div>
+      </details>
     </div>
   );
 }

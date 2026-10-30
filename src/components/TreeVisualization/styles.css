@@ -66,6 +66,32 @@
   font-weight: 600;
 }
 
+.action-arrow-line {
+  stroke: #F0C46A;
+  stroke-width: 2.2px;
+  stroke-dasharray: 5 4;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
+}
+
+.action-arrow-card {
+  fill: rgba(14, 25, 23, 0.96);
+  stroke: rgba(240, 196, 106, 0.74);
+  stroke-width: 1px;
+}
+
+.action-arrow-title {
+  fill: #F2CF85;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.action-arrow-note {
+  fill: #D2DED7;
+  font-size: 8px;
+}
+
+.action-arrow { pointer-events: none; }
+
 @keyframes node-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.82; }

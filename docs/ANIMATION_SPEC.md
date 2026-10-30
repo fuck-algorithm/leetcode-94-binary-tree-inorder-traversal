@@ -23,7 +23,7 @@
 
 - 逻辑布局由 `src/utils/tree/treeEngine.ts` 的中序序号确定：`x = inorderIndex * nodeSpacing`，`y = depth * levelHeight`。
 - 画布身份使用 `TreeNodeData.nodeId`；边使用父子 ID 组合，禁止依赖数组索引作为 join key。
-- 渲染层：edges、nodes、labels、legend 均由一次创建的分层与稳定语义 ID keyed enter/update/exit 驱动；`src/utils/tree/treeMotionLayout.ts` 依中序序号+深度生成确定坐标并映射到视口，切帧不重排。左右边线用邻近青绿色区分，不再使用红/绿对撞。当前还没有树容器/arrows 层与统一帧契约，AC-023 整体仍未通过。
+- 渲染层：edges、nodes、labels、legend、action-arrows 均由一次创建的分层与稳定语义 ID keyed enter/update/exit 驱动；`src/utils/tree/treeMotionLayout.ts` 依中序序号+深度生成确定坐标并映射到视口，切帧不重排。动作箭头锚定当前节点，并标注入栈/弹出/移动/访问动作与当前步骤简述；左右边线用邻近青绿色区分。当前还没有树容器与统一 AlgorithmStep 帧契约，AC-023 整体仍未通过。
 - 递归与迭代栈都应作为有槽位、容量、方向指针和空状态的容器，而非仅展示裸值。
 
 ## 空间预算（目标值，尚未通过实测）
@@ -50,4 +50,4 @@
 
 ## 当前差距
 
-当前 tree renderer 已采用分层 keyed join，不再整屏清空；动画已有稳定节点/边 ID、固定四态图例、MOTION token 与 reduced-motion 支持，并已通过 Vitest + Playwright 基础回归。尚缺标准 `operation/narration/anchorIds` 步骤契约、栈/递归帧作为真实容器、完整单屏教学层，以及完整视觉证据，因此 AC-023 仍判定 FAIL。
+当前 tree renderer 已采用分层 keyed join，不再整屏清空；画布已显示锚定当前节点的动作箭头与步骤简述。代码面板现默认展示完整 15 行代码，stack/result 快照常驻，其余变量与调用栈折叠；工作区栈栏压缩至 190px。尚缺标准 `operation/narration/anchorIds` 的统一算法帧契约、栈/递归帧作为真实容器、完整单屏教学层以及完整视觉证据，因此 AC-023 仍判定 FAIL。

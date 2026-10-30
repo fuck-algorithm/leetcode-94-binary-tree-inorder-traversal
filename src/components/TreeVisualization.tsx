@@ -10,6 +10,8 @@ interface TreeVisualizationProps {
   highlightedNodeId?: string | null;
   visitedNodeIds?: string[];
   stackNodeIds?: string[];
+  action?: string;
+  narration?: string;
 }
 
 export default function TreeVisualization({ 
@@ -17,8 +19,10 @@ export default function TreeVisualization({
   width = 800, 
   height = 600, 
   highlightedNodeId, 
-  visitedNodeIds = [], 
-  stackNodeIds = [] 
+  visitedNodeIds = [],
+  stackNodeIds = [],
+  action = 'init',
+  narration = '从根节点开始，按左子树、根节点、右子树的顺序遍历。',
 }: TreeVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,10 +85,12 @@ export default function TreeVisualization({
       highlightedNodeId,
       visitedNodeIds,
       stackNodeIds,
-      hasStackPanel: stackNodeIds && stackNodeIds.length > 0
+      hasStackPanel: stackNodeIds && stackNodeIds.length > 0,
+      action,
+      narration,
     });
     
-  }, [data, dimensions, highlightedNodeId, visitedNodeIds, stackNodeIds]);
+  }, [data, dimensions, highlightedNodeId, visitedNodeIds, stackNodeIds, action, narration]);
   
   return (
     <div 

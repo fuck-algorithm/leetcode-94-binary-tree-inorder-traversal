@@ -676,6 +676,8 @@ export default function BinaryTreeInorderTraversal() {
                   highlightedNodeId={currentNodeId}
                   visitedNodeIds={visitedNodeIds}
                   stackNodeIds={getCurrentStackState()?.stack ?? []}
+                  action={getCurrentStackState()?.action ?? 'visit'}
+                  narration={getCurrentStackState()?.description ?? '从根节点开始，按左子树、根节点、右子树的顺序遍历。'}
                 />
               </div>
             )}

@@ -16,15 +16,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background: linear-gradient(90deg, var(--c-indigo), var(--c-indigo-dark));
-  border-bottom: 1px solid var(--c-border);
+  min-height: 34px;
+  padding: 4px 10px;
+  background: #14211F;
+  border-bottom: 1px solid #31443F;
 }
 
 .cdp-title {
   font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--c-text-on-color);
+  font-size: 0.82rem;
+  color: #D6E7DF;
 }
 
 .cdp-step-badge {
@@ -36,41 +37,53 @@
 }
 
 .cdp-code-block {
-  padding: 8px 0;
-  background-color: var(--c-bg);
-  overflow-y: auto;
-  flex: 0 0 auto;
-  max-height: 260px;
+  padding: 10px 0 8px;
+  background-color: #0B121A;
+  overflow: auto;
+  overscroll-behavior: contain;
+  flex: 1 1 auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #425851 transparent;
 }
 
 .cdp-code-line {
   display: flex;
   align-items: center;
-  padding: 2px 8px;
+  min-height: 27px;
+  padding: 2px 10px;
   position: relative;
-  font-size: 0.82rem;
-  line-height: 1.5;
+  font-size: clamp(0.76rem, 0.8vw, 0.9rem);
+  line-height: 1.48;
+  white-space: pre;
 }
 
 /* 当前行 — 翠绿左边框 + 翠绿底 */
 .cdp-code-line.cdp-active {
-  background-color: rgba(16, 185, 129, 0.16);
-  border-left: 3px solid var(--c-emerald);
+  background: linear-gradient(90deg, rgba(69, 197, 164, 0.17), rgba(69, 197, 164, 0.045));
+  border-left: 2px solid #69D7B7;
 }
 
 .cdp-line-no {
   display: inline-block;
-  width: 26px;
+  width: 24px;
+  flex: 0 0 24px;
   text-align: right;
-  color: #475569;
-  margin-right: 10px;
+  color: #647A73;
+  margin-right: 12px;
   user-select: none;
+  font-size: 0.72rem;
 }
 
 .cdp-line-text {
-  color: #E2E8F0;
+  color: #D6E3DD;
   white-space: pre;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
 }
+
+.cdp-token-keyword { color: #79C8A9; font-weight: 650; }
+.cdp-token-literal { color: #E2BC72; }
+.cdp-token-punctuation { color: #8DA39A; }
 
 /* 当前行文字 — 琥珀高亮 */
 .cdp-active .cdp-line-text {
@@ -79,8 +92,81 @@
 }
 
 .cdp-marker {
-  margin-left: 8px;
-  color: var(--c-amber);
+  margin-left: auto;
+  padding-left: 12px;
+  color: #69D7B7;
+  font-size: 0.54rem;
+}
+
+.cdp-state-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1px;
+  flex: 0 0 auto;
+  background: #2D403B;
+  border-top: 1px solid #2D403B;
+}
+
+.cdp-state-strip > span {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  padding: 6px 9px;
+  background: #101A1A;
+  overflow: hidden;
+}
+
+.cdp-state-strip b {
+  color: #829990;
+  font-size: 0.67rem;
+  font-weight: 600;
+}
+
+.cdp-state-strip code {
+  min-width: 0;
+  overflow: hidden;
+  color: #D8C07D;
+  font: 600 0.72rem 'JetBrains Mono', Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cdp-details {
+  flex: 0 0 auto;
+  max-height: min(37%, 230px);
+  overflow: auto;
+  background: #101719;
+  border-top: 1px solid #2D403B;
+}
+
+.cdp-details > summary {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 10px;
+  color: #9DB2A8;
+  background: #131F1E;
+  cursor: pointer;
+  font: 600 0.7rem system-ui, sans-serif;
+  list-style: none;
+}
+
+.cdp-details > summary::before { content: '＋'; margin-right: 6px; color: #69B99A; }
+.cdp-details[open] > summary::before { content: '−'; }
+.cdp-details .cdp-section { padding: 6px 9px; }
+.cdp-details .cdp-section-title { margin-bottom: 4px; font-size: 0.66rem; }
+.cdp-details .cdp-var-grid { gap: 4px; }
+.cdp-details .cdp-var-cell { padding: 3px 6px; }
+.cdp-details .cdp-callstack { gap: 3px; }
+
+@media (max-height: 820px) {
+  .cdp-code-line { min-height: 23px; padding-block: 1px; }
+  .cdp-code-block { padding-block: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cdp-code-line, .cdp-marker { transition: none !important; }
 }
 
 .cdp-section {
