@@ -15,10 +15,10 @@ const ACTION_META: Record<
   StackPanelProps['action'],
   { label: string; color: string; icon: string }
 > = {
-  push: { label: '入栈 PUSH', color: palette.action.push, icon: '⬇' },
-  pop: { label: '出栈 POP', color: palette.action.pop, icon: '⬆' },
-  visit: { label: '访问 VISIT', color: palette.action.visit, icon: '●' },
-  move_right: { label: '转向右子树', color: palette.action.moveRight, icon: '→' },
+  push: { label: '入栈 PUSH', color: palette.action.push, icon: '↓' },
+  pop: { label: '出栈 POP', color: palette.action.pop, icon: '↑' },
+  visit: { label: '访问 VISIT', color: palette.action.visit, icon: '•' },
+  move_right: { label: '转向右子树', color: palette.action.moveRight, icon: '↗' },
 };
 
 function getPhase(description: string): string {
@@ -67,10 +67,12 @@ export default function StackPanel({
           ) : (
             stackVals
               .map((val, idx) => {
+                const nodeId = stack[idx] ?? `stack-node-${idx}`;
                 const isTop = idx === stackVals.length - 1;
                 return (
                   <div
-                    key={`${stack[idx]}-${idx}`}
+                    key={nodeId}
+                    data-node-id={nodeId}
                     className={`sp-stack-item ${isTop ? 'sp-top' : ''}`}
                   >
                     <span className="sp-item-val">{val}</span>

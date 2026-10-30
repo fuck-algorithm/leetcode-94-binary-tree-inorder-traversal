@@ -23,7 +23,7 @@
 
 - 逻辑布局由 `src/utils/tree/treeEngine.ts` 的中序序号确定：`x = inorderIndex * nodeSpacing`，`y = depth * levelHeight`。
 - 画布身份使用 `TreeNodeData.nodeId`；边使用父子 ID 组合，禁止依赖数组索引作为 join key。
-- 目标渲染层：containers、edges、arrows、nodes、labels；使用 keyed enter/update/exit。当前 renderer 仍会整屏清理，属于待修复阻断项，不视为符合规格。
+- 渲染层：edges、nodes、labels、legend 均由一次创建的分层与稳定语义 ID keyed enter/update/exit 驱动；`src/utils/tree/treeMotionLayout.ts` 依中序序号+深度生成确定坐标并映射到视口，切帧不重排。当前还没有树容器/arrows 层与统一帧契约，AC-023 整体仍未通过。
 - 递归与迭代栈都应作为有槽位、容量、方向指针和空状态的容器，而非仅展示裸值。
 
 ## 空间预算（目标值，尚未通过实测）
@@ -38,7 +38,7 @@
 
 状态图例固定为 `current / compare / visited / done`，如需错误态再加 `error`。不得以颜色作为唯一信号，禁止紫色系。焦点离开后保留 `visited`，每帧最多一个 `current`。
 
-统一动效时间应从 `MOTION` token 读取；切帧须中断旧过渡，退出元素通过统一清理函数移除。`prefers-reduced-motion: reduce` 时 JS 时长归零且 CSS transition/animation 关闭，步骤、图例与代码同步仍完整更新。上述动效机制目前未实现，AC-023 仍为 FAIL。
+树节点、边、标签过渡使用 `src/utils/tree/treeRenderer.ts` 的 `MOTION` token（enter 220ms、update 260ms、exit 180ms）；状态切帧按稳定 ID 复用并中断相关命名过渡，退出在过渡 end 回调清理。`prefers-reduced-motion: reduce` 时 D3 状态/坐标即时写入，CSS transition/animation 关闭，图例与当前状态继续更新。页面步骤本身尚未加入标准 `operation/narration/anchorIds`，且还缺统一帧容器，因此 AC-023 仍为 FAIL。
 
 ## 验证场景
 
@@ -50,4 +50,4 @@
 
 ## 当前差距
 
-`src/utils/tree/treeRenderer.ts` 当前通过 `selectAll('*').remove()` 清空并重建 SVG；步骤尚无标准 `operation/narration/anchorIds`；缺少栈/队列容器渲染、motion token、reduced-motion、Playwright 和视觉证据。完成这些整改并复验前，本规格仅作为计划与证据清单，AC-023 判定 FAIL。
+当前 tree renderer 已采用分层 keyed join，不再整屏清空；动画已有稳定节点/边 ID、固定四态图例、MOTION token 与 reduced-motion 支持，并已通过 Vitest + Playwright 基础回归。尚缺标准 `operation/narration/anchorIds` 步骤契约、栈/递归帧作为真实容器、完整单屏教学层，以及完整视觉证据，因此 AC-023 仍判定 FAIL。

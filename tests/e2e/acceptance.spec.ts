@@ -80,6 +80,38 @@ test('E2E-009 画布 SVG 和节点可见', async ({ page }) => {
   await page.getByRole('button', { name: '构建' }).click()
   await expect(page.locator('.tree-visualization-svg')).toBeVisible()
   await expect(page.locator('.node')).toHaveCount(3)
+  await expect(page.locator('.layer-edges .tree-edge')).toHaveCount(2)
+  await expect(page.locator('.layer-legend .legend-item')).toHaveCount(4)
+})
+
+test('E2E-016 重复跳步复用稳定节点且更新焦点', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('#treeInput').fill(sample)
+  await page.getByRole('button', { name: '构建' }).click()
+  await expect(page.locator('.node')).toHaveCount(3)
+  const nodeIds = await page.locator('.node').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-node-id')).sort())
+
+  for (let index = 0; index < 6; index += 1) {
+    await page.getByRole('button', { name: /下一步/ }).click()
+    await page.getByRole('button', { name: /上一步/ }).click()
+  }
+  await page.getByRole('button', { name: /下一步/ }).click()
+  await page.waitForTimeout(400)
+
+  await expect(page.locator('.node')).toHaveCount(3)
+  await expect(page.locator('[data-status="current"]')).toHaveCount(1)
+  expect(await page.locator('.node').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-node-id')).sort())).toEqual(nodeIds)
+})
+
+test('E2E-017 reduced-motion 下仍显示当前节点状态', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await page.locator('#treeInput').fill(sample)
+  await page.getByRole('button', { name: '构建' }).click()
+  await page.getByRole('button', { name: /下一步/ }).click()
+
+  await expect(page.locator('[data-status="current"]')).toHaveCount(1)
+  await expect(page.locator('.layer-legend .legend-item')).toHaveCount(4)
 })
 
 test('E2E-010 算法选择控件可用', async ({ page }) => {

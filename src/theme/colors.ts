@@ -23,12 +23,12 @@ export const palette = {
   amber: '#F59E0B',         // 琥珀 - 栈/访问           =var(--c-amber)
   amberDark: '#D97706',
 
-  // 节点状态色（保留 key，微调更鲜艳以适配多色背景）
-  nodeDefault: '#64748B',   // 石板灰 - 未访问
-  nodeCurrent: '#EF4444',   // 红 - 正在访问
-  nodeVisited: '#10B981',   // 翠绿 - 已访问
-  nodeInStack: '#F59E0B',   // 琥珀 - 在栈中
-  nodePopped: '#94A3B8',    // 浅灰 - 已弹出
+  // 节点状态色：以青绿为主，琥珀只标记当前栈顶
+  nodeDefault: '#29413E',   // 松针石板色 - 未访问
+  nodeCurrent: '#45C5A4',   // 柔和薄荷青 - 当前节点
+  nodeVisited: '#287F6B',   // 深青绿 - 已访问
+  nodeInStack: '#D6A85C',   // 柔和琥珀 - 等待回溯
+  nodePopped: '#647A76',    // 雾灰绿 - 已弹出
 
   // 连接线与边（保留）
   linkDefault: '#94A3B8',
@@ -37,11 +37,11 @@ export const palette = {
 
   // 操作 badge 配色（保留）
   action: {
-    push: '#10B981',        // 入栈 - 绿
-    pop: '#EF4444',         // 出栈 - 红
-    visit: '#F59E0B',       // 访问 - 琥珀
-    moveRight: '#EC4899',   // 右移 - 粉(原紫,移除紫色配色)
-    init: '#6366F1',        // 初始化 - 靛
+    push: '#45C5A4',        // 入栈 - 薄荷青
+    pop: '#8CA39A',         // 出栈 - 雾灰绿
+    visit: '#D6A85C',       // 访问 - 柔和琥珀
+    moveRight: '#8DB8A8',   // 移动 - 浅青绿
+    init: '#45C5A4',        // 初始化 - 薄荷青
   } as const,
 
   // 背景 / 表面（深底单一做视觉锚，表面分层）

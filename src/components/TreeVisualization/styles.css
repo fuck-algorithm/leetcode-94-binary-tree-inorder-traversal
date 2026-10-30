@@ -16,32 +16,68 @@
   display: block;
 }
 
-/* 节点动画（drop-shadow 由 renderer 的 filter 内联设置，此处仅保留过渡） */
-.node circle,
-.node rect,
+.tree-motion-root {
+  transform-origin: center;
+}
+
+.node-body {
+  fill: var(--c-surface);
+  stroke: #526964;
+  stroke-width: 1.4px;
+  transition: fill 220ms ease, stroke 220ms ease, stroke-width 220ms ease;
+}
+
+.node-value {
+  fill: var(--c-text);
+  font-weight: 650;
+  pointer-events: none;
+  user-select: none;
+}
+
+.node-halo {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 1.5px;
+  transition: stroke 220ms ease, opacity 220ms ease;
+  opacity: 0;
+}
+
+.node[data-status='idle'] .node-body { fill: #172723; stroke: #38504A; }
+.node[data-status='visited'] .node-body { fill: #1D4B40; stroke: #347D67; }
+.node[data-status='stack'] .node-body { fill: #4A3D27; stroke: #C49A51; }
+.node[data-status='current'] .node-body { fill: #1D6655; stroke: #69D7B7; stroke-width: 2px; }
+.node[data-status='current'] .node-halo { stroke: rgba(105, 215, 183, 0.55); opacity: 1; }
+
 .tree-link {
-  transition: all 0.3s ease;
+  fill: none;
+  transition: stroke 240ms ease, stroke-width 240ms ease, opacity 240ms ease;
 }
 
-.node.visited circle,
-.node.visited rect {
-  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
-}
-
-.node.current circle,
-.node.current rect {
-  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6));
-  animation: node-pulse 1.4s ease-in-out infinite;
-}
-
-.node.stack circle,
-.node.stack rect {
-  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
+.layer-legend { pointer-events: none; }
+.legend-backdrop { fill: rgba(13, 25, 23, 0.92); stroke: rgba(100, 137, 124, 0.45); stroke-width: 1px; }
+.legend-item circle { stroke: rgba(230, 242, 235, 0.65); stroke-width: 0.6px; }
+.edge-label {
+  paint-order: stroke;
+  stroke: var(--c-bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  font-weight: 600;
 }
 
 @keyframes node-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.82; }
+}
+
+.node.current .node-halo { animation: node-pulse 1.8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* 响应式调整 */
