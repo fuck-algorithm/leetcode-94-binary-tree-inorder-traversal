@@ -29,9 +29,9 @@ export function layoutTreeForMotion(data: TreeNodeData, dimensions: TreeDimensio
   countNodes(data)
   const width = dimensions.effectiveWidth || dimensions.width
   const height = dimensions.effectiveHeight || dimensions.height
-  const nodeRadius = Math.min(Math.max(14, width / (Math.sqrt(count) * 4)), 24)
-  const pitch = nodeRadius * 2.5 + 34
-  const levelGap = nodeRadius * 3 + 26
+  const nodeRadius = Math.min(Math.max(14, width / (Math.sqrt(count) * 3.2)), 28)
+  const pitch = nodeRadius * 2.5 + 28
+  const levelGap = nodeRadius * 2.8 + 22
   const nodes: MotionTreeNode[] = []
   const byId = new Map<string, MotionTreeNode>()
   let inorderIndex = 0
@@ -73,7 +73,7 @@ export function layoutTreeForMotion(data: TreeNodeData, dimensions: TreeDimensio
   const maxY = Math.max(...nodes.map((node) => node.y)) + pad
   const structureWidth = Math.max(1, maxX - minX)
   const structureHeight = Math.max(1, maxY - minY)
-  const scale = Math.min(width / structureWidth, height / structureHeight) * 0.78
+  const scale = Math.min(width / structureWidth, height / structureHeight) * 0.88
   const offsetX = (width - structureWidth * scale) / 2 - minX * scale
   const offsetY = (height - structureHeight * scale) / 2 - minY * scale
   nodes.forEach((node) => {

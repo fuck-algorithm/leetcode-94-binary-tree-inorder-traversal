@@ -32,8 +32,8 @@ export const palette = {
 
   // 连接线与边（保留）
   linkDefault: '#94A3B8',
-  linkLeft: '#10B981',      // 左子树连线 - 绿
-  linkRight: '#EF4444',     // 右子树连线 - 红
+  linkLeft: '#62A992',      // 左子树连线 - 青绿
+  linkRight: '#8DB8A8',     // 右子树连线 - 浅青绿
 
   // 操作 badge 配色（保留）
   action: {

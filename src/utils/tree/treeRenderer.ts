@@ -42,17 +42,14 @@ export const renderTree = (
   dimensions: TreeDimensions,
   options: TreeRenderOptions,
 ): void => {
-  const { highlightedNodeId, visitedNodeIds = [], stackNodeIds = [], hasStackPanel = false } = options
+  const { highlightedNodeId, visitedNodeIds = [], stackNodeIds = [] } = options
   const svg = d3.select(svgElement)
-  const layout = layoutTreeForMotion(data, {
-    ...dimensions,
-    effectiveWidth: Math.max(160, (dimensions.effectiveWidth || dimensions.width) - (hasStackPanel ? 220 : 0)),
-  })
+  const layout = layoutTreeForMotion(data, dimensions)
   const { root, edges, nodes, labels, legend } = prepareLayers(svg)
   const { minX, maxX, minY, maxY } = layout.bounds
-  const effectiveWidth = Math.max(100, (dimensions.effectiveWidth || dimensions.width) - (hasStackPanel ? 220 : 0))
+  const effectiveWidth = Math.max(100, dimensions.effectiveWidth || dimensions.width)
   const effectiveHeight = Math.max(100, dimensions.effectiveHeight || dimensions.height)
-  const scale = Math.min(effectiveWidth / (maxX - minX), effectiveHeight / (maxY - minY)) * 0.88 || 1
+  const scale = Math.min(effectiveWidth / (maxX - minX), effectiveHeight / (maxY - minY)) || 1
   const translateX = effectiveWidth / 2 - ((minX + maxX) / 2) * scale
   const translateY = effectiveHeight / 2 - ((minY + maxY) / 2) * scale
   const reduced = transitionDuration('update') === 0

@@ -56,6 +56,8 @@
 .layer-legend { pointer-events: none; }
 .legend-backdrop { fill: rgba(13, 25, 23, 0.92); stroke: rgba(100, 137, 124, 0.45); stroke-width: 1px; }
 .legend-item circle { stroke: rgba(230, 242, 235, 0.65); stroke-width: 0.6px; }
+.legend-item text { fill: #D3E2DB; font-size: 10px; font-weight: 550; }
+.layer-legend { filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.2)); }
 .edge-label {
   paint-order: stroke;
   stroke: var(--c-bg);
